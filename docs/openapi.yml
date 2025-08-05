@@ -1,0 +1,420 @@
+openapi: 3.0.3
+info:
+  title: 工大祭企画情報API
+  description: 東京科学大学の学園祭である工大祭の企画情報を提供するAPI
+  version: 1.0.0
+servers:
+  - url: https://api.koudaisai.com/v1
+    description: 本番環境
+  - url: https://staging-api.koudaisai.com/v1
+    description: ステージング環境
+  - url: http://localhost:8080/v1/
+    description: 開発環境
+
+paths:
+  /plans:
+    get:
+      summary: 全ての企画情報を取得
+      description: 工大祭の全ての企画情報を取得します。詳細情報（details）はinclude_details=trueを指定した場合のみ含まれます。
+      parameters:
+        - name: type
+          in: query
+          description: 企画タイプでフィルタリング
+          schema:
+            type: string
+            enum: [booth, general, stage, labo]
+        - name: recommended
+          in: query
+          description: おすすめ企画でフィルタリング
+          schema:
+            type: boolean
+        - name: child_friendly
+          in: query
+          description: 子供向け企画でフィルタリング
+          schema:
+            type: boolean
+        - name: lab_tour
+          in: query
+          description: 研究室ツアー参加企画でフィルタリング
+          schema:
+            type: boolean
+        - name: include_details
+          in: query
+          description: 詳細情報（details）を含めるかどうか。trueの場合のみdetailsフィールドが返される
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: 企画情報のリスト
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  plans:
+                    type: array
+                    items:
+                      oneOf:
+                        - $ref: '#/components/schemas/BoothPlan'
+                        - $ref: '#/components/schemas/GeneralPlan'
+                        - $ref: '#/components/schemas/StagePlan'
+                        - $ref: '#/components/schemas/LaboPlan'
+  
+  /plans/{planId}:
+    get:
+      summary: 特定の企画情報を取得
+      description: 指定されたIDの企画情報を取得します。詳細情報（details）はinclude_details=trueを指定した場合のみ含まれます。
+      parameters:
+        - name: planId
+          in: path
+          required: true
+          description: 企画ID
+          schema:
+            type: string
+        - name: include_details
+          in: query
+          description: 詳細情報（details）を含めるかどうか。trueの場合のみdetailsフィールドが返される
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: 企画情報
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/BoothPlan'
+                  - $ref: '#/components/schemas/GeneralPlan'
+                  - $ref: '#/components/schemas/StagePlan'
+                  - $ref: '#/components/schemas/LaboPlan'
+        '404':
+          description: 企画が見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /plans/{planId}/icon:
+    get:
+      summary: 企画のアイコンダウンロードURLを取得
+      description: 指定されたIDの企画のアイコン画像のダウンロードURLにリダイレクトします
+      parameters:
+        - name: planId
+          in: path
+          required: true
+          description: 企画ID
+          schema:
+            type: string
+      responses:
+        '302':
+          description: アイコンダウンロードURLへのリダイレクト
+          headers:
+            Location:
+              description: アイコン画像のダウンロードURL
+              schema:
+                type: string
+                format: uri
+                example: "https://storage.example.com/icons/M-001.png?expires=1234567890&signature=abc123"
+        '404':
+          description: 企画またはアイコンが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    BasePlan:
+      type: object
+      required:
+        - id
+        - type
+        - organization_name
+        - plan_name
+        - description
+        - is_child_friendly
+        - is_recommended
+      properties:
+        id:
+          type: string
+          description: 企画の一意識別子
+        type:
+          type: string
+          description: 企画のタイプ
+        organization_name:
+          type: string
+          description: 団体名（参加申請時のものを掲載、変更原則なし）
+        plan_name:
+          type: string
+          description: 企画名（企画内容申請時のものを掲載、変更原則なし）
+        description:
+          type: string
+          description: 企画内容紹介文
+        detailed_description:
+          type: string
+          description: 企画内容の詳細説明（マークダウン形式対応、チケット販売状況等の情報を含む）
+        is_child_friendly:
+          type: boolean
+          description: 子供向け企画か否か
+        is_recommended:
+          type: boolean
+          description: おすすめ企画か否か
+        schedule:
+          type: object
+          properties:
+            start_time:
+              type: string
+              format: date-time
+              description: 企画開始時間
+            end_time:
+              type: string
+              format: date-time
+              description: 企画終了時間
+        location:
+          type: string
+          description: 企画実施場所
+        details:
+          $ref: '#/components/schemas/PlanDetails'
+          description: 企画の詳細情報
+
+    PlanDetails:
+      type: object
+      properties:
+        events:
+          type: array
+          description: 当日のタイムテーブル
+          items:
+            type: object
+            properties:
+              time:
+                type: string
+                format: date-time
+                description: イベント開始時間
+              title:
+                type: string
+                description: イベントタイトル
+              description:
+                type: string
+                description: イベント説明
+        products:
+          type: array
+          description: 当日販売される商品の一覧
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                description: 商品名
+              price:
+                type: integer
+                description: 価格
+              description:
+                type: string
+                description: 商品説明
+              availability:
+                type: string
+                enum: [available, limited, sold_out]
+                description: 販売状況
+        additional_info:
+          type: string
+          description: 追加情報（マークダウン形式）
+
+    BoothPlan:
+      allOf:
+        - $ref: '#/components/schemas/BasePlan'
+        - type: object
+          required:
+            - type
+            - content_details
+          properties:
+            id:
+              type: string
+              pattern: '^M-\d{3}$'
+              description: 模擬店企画ID（M-000形式）
+            type:
+              type: string
+              enum: [booth]
+            content_details:
+              type: object
+              description: 出し物の内容
+              properties:
+                menu_items:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                        description: メニュー名
+                      price:
+                        type: integer
+                        description: 価格
+                      description:
+                        type: string
+                        description: メニュー説明
+      example:
+        id: "M-001"
+        type: "booth"
+        organization_name: "料理研究会"
+        plan_name: "美味しいたこ焼き"
+        description: "伝統のレシピで作る本格的なたこ焼きをお楽しみください。"
+        is_child_friendly: true
+        is_recommended: true
+        schedule:
+          start_time: "2025-10-25T10:00:00+09:00"
+          end_time: "2025-10-25T16:00:00+09:00"
+        location: "中央広場 A-5"
+        content_details:
+          menu_items:
+            - name: "たこ焼き（8個）"
+              price: 400
+              description: "もちもち食感の生地に新鮮なたこを使用"
+            - name: "チーズたこ焼き（8個）"
+              price: 450
+              description: "とろけるチーズ入り"
+
+    GeneralPlan:
+      allOf:
+        - $ref: '#/components/schemas/BasePlan'
+        - type: object
+          required:
+            - type
+            - content_details
+          properties:
+            id:
+              type: string
+              pattern: '^I-\d{3}$'
+              description: 一般企画ID（I-000形式）
+            type:
+              type: string
+              enum: [general]
+            content_details:
+              type: object
+              description: 出し物の内容
+              properties:
+                activity_type:
+                  type: string
+                  description: 活動タイプ
+                participation_method:
+                  type: string
+                  description: 参加方法
+      example:
+        id: "I-001"
+        type: "general"
+        organization_name: "ゲーム制作サークル"
+        plan_name: "オリジナルゲーム体験会"
+        description: "サークルメンバーが制作したオリジナルゲームを体験できます。"
+        is_child_friendly: true
+        is_recommended: true
+        schedule:
+          start_time: "2025-10-25T10:00:00+09:00"
+          end_time: "2025-10-25T17:00:00+09:00"
+        location: "第二校舎 2F 201教室"
+        content_details:
+          activity_type: "ゲーム体験"
+          participation_method: "自由参加、予約不要"
+
+    StagePlan:
+      allOf:
+        - $ref: '#/components/schemas/BasePlan'
+        - type: object
+          required:
+            - type
+            - content_details
+          properties:
+            id:
+              type: string
+              pattern: '^S-\d{3}$'
+              description: ステージ企画ID（S-000形式）
+            type:
+              type: string
+              enum: [stage]
+            content_details:
+              type: object
+              description: 出し物の内容
+              properties:
+                performance_type:
+                  type: string
+                  description: パフォーマンスタイプ
+                duration:
+                  type: integer
+                  description: 公演時間（分）
+      example:
+        id: "S-001"
+        type: "stage"
+        organization_name: "軽音楽部"
+        plan_name: "アコースティックライブ"
+        description: "人気曲のカバーと部員によるオリジナル曲の演奏をお届けします。"
+        is_child_friendly: true
+        is_recommended: true
+        schedule:
+          start_time: "2025-10-25T13:00:00+09:00"
+          end_time: "2025-10-25T14:00:00+09:00"
+        location: "中央ステージ"
+        content_details:
+          performance_type: "音楽ライブ"
+          duration: 60
+
+    LaboPlan:
+      allOf:
+        - $ref: '#/components/schemas/BasePlan'
+        - type: object
+          required:
+            - type
+            - is_lab_tour
+          properties:
+            id:
+              type: string
+              pattern: '^L-\d{3}$'
+              description: 研究室企画ID（L-000形式）
+            type:
+              type: string
+              enum: [labo]
+            is_lab_tour:
+              type: boolean
+              description: 研究室ツアー参加企画か否か
+            content_details:
+              type: object
+              description: 出し物の内容
+              properties:
+                research_field:
+                  type: string
+                  description: 研究分野
+                activities:
+                  type: array
+                  items:
+                    type: string
+                  description: 体験できる活動
+      example:
+        id: "L-001"
+        type: "labo"
+        organization_name: "ロボット工学研究室"
+        plan_name: "ロボットプログラミング体験"
+        description: "最新のロボット技術を体験し、簡単なプログラミングを学べます。"
+        is_child_friendly: true
+        is_recommended: true
+        is_lab_tour: true
+        schedule:
+          start_time: "2025-10-25T10:00:00+09:00"
+          end_time: "2025-10-25T16:00:00+09:00"
+        location: "工学部棟 3F 305研究室"
+        content_details:
+          research_field: "ロボット工学、人工知能"
+          activities:
+            - "ロボットアームの操作体験"
+            - "簡単なプログラミング体験"
+            - "研究室の研究成果展示"
+
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
