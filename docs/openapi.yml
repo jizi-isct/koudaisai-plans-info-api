@@ -126,6 +126,41 @@ paths:
 
 components:
   schemas:
+    IndoorLocation:
+      type: object
+      required:
+        - type
+        - building
+        - room
+      properties:
+        type:
+          type: string
+          enum: [indoor]
+          description: 企画実施場所が屋内であることを示す
+        name:
+          type: string
+          description: 企画実施場所の名称
+        building:
+          type: string
+          description: 建物名
+        room:
+          type: string
+          description: 部屋名
+
+    OutdoorLocation:
+      type: object
+      required:
+        - type
+        - name
+      properties:
+        type:
+          type: string
+          enum: [outdoor]
+          description: 企画実施場所が屋外であることを示す
+        name:
+          type: string
+          description: 企画実施場所の名称
+
     BasePlan:
       type: object
       required:
@@ -175,16 +210,9 @@ components:
                 description: 企画終了時間
         location:
           oneOf:
-            - type: string
-              description: 企画実施場所の名称（屋外の場合）
-            - type: object
-              properties:
-                building:
-                  type: string
-                  description: 建物名
-                room:
-                  type: string
-                  description: 部屋名
+            - $ref: '#/components/schemas/IndoorLocation'
+            - $ref: '#/components/schemas/OutdoorLocation'
+          description: 企画実施場所
         details:
           $ref: '#/components/schemas/PlanDetails'
           description: 企画の詳細情報
@@ -240,7 +268,9 @@ components:
         schedule:
           - start_time: "2025-10-25T10:00:00+09:00"
             end_time: "2025-10-25T16:00:00+09:00"
-        location: "中央広場 A-5"
+        location:
+          type: "outdoor"
+          name: "中央広場 A-5"
 
     GeneralPlan:
       allOf:
@@ -267,7 +297,11 @@ components:
         schedule:
           - start_time: "2025-10-25T10:00:00+09:00"
             end_time: "2025-10-25T17:00:00+09:00"
-        location: "第二校舎 2F 201教室"
+        location:
+          type: "indoor"
+          name: "第二校舎 2F 201教室"
+          building: "第二校舎"
+          room: "2F 201教室"
 
     StagePlan:
       allOf:
@@ -294,7 +328,9 @@ components:
         schedule:
           - start_time: "2025-10-25T13:00:00+09:00"
             end_time: "2025-10-25T14:00:00+09:00"
-        location: "中央ステージ"
+        location:
+          type: "outdoor"
+          name: "中央ステージ"
 
     LaboPlan:
       allOf:
@@ -326,7 +362,11 @@ components:
         schedule:
           - start_time: "2025-10-25T10:00:00+09:00"
             end_time: "2025-10-25T16:00:00+09:00"
-        location: "工学部棟 3F 305研究室"
+        location:
+          type: "indoor"
+          name: "工学部棟 3F 305研究室"
+          building: "工学部棟"
+          room: "3F 305研究室"
 
     Error:
       type: object
