@@ -143,6 +143,7 @@ components:
         type:
           type: string
           description: 企画のタイプ
+          enum: [booth, general, stage, labo]
         organization_name:
           type: string
           description: 団体名（参加申請時のものを掲載、変更原則なし）
@@ -152,9 +153,6 @@ components:
         description:
           type: string
           description: 企画内容紹介文
-        detailed_description:
-          type: string
-          description: 企画内容の詳細説明（マークダウン形式対応、チケット販売状況等の情報を含む）
         is_child_friendly:
           type: boolean
           description: 子供向け企画か否か
@@ -162,19 +160,31 @@ components:
           type: boolean
           description: おすすめ企画か否か
         schedule:
-          type: object
-          properties:
-            start_time:
-              type: string
-              format: date-time
-              description: 企画開始時間
-            end_time:
-              type: string
-              format: date-time
-              description: 企画終了時間
+          type: array
+          description: 企画のスケジュール一覧
+          items:
+            type: object
+            properties:
+              start_time:
+                type: string
+                format: date-time
+                description: 企画開始時間
+              end_time:
+                type: string
+                format: date-time
+                description: 企画終了時間
         location:
-          type: string
-          description: 企画実施場所
+          oneOf:
+            - type: string
+              description: 企画実施場所の名称（屋外の場合）
+            - type: object
+              properties:
+                building:
+                  type: string
+                  description: 建物名
+                room:
+                  type: string
+                  description: 部屋名
         details:
           $ref: '#/components/schemas/PlanDetails'
           description: 企画の詳細情報
@@ -182,22 +192,6 @@ components:
     PlanDetails:
       type: object
       properties:
-        events:
-          type: array
-          description: 当日のタイムテーブル
-          items:
-            type: object
-            properties:
-              time:
-                type: string
-                format: date-time
-                description: イベント開始時間
-              title:
-                type: string
-                description: イベントタイトル
-              description:
-                type: string
-                description: イベント説明
         products:
           type: array
           description: 当日販売される商品の一覧
@@ -227,7 +221,6 @@ components:
         - type: object
           required:
             - type
-            - content_details
           properties:
             id:
               type: string
@@ -236,24 +229,6 @@ components:
             type:
               type: string
               enum: [booth]
-            content_details:
-              type: object
-              description: 出し物の内容
-              properties:
-                menu_items:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      name:
-                        type: string
-                        description: メニュー名
-                      price:
-                        type: integer
-                        description: 価格
-                      description:
-                        type: string
-                        description: メニュー説明
       example:
         id: "M-001"
         type: "booth"
@@ -263,17 +238,9 @@ components:
         is_child_friendly: true
         is_recommended: true
         schedule:
-          start_time: "2025-10-25T10:00:00+09:00"
-          end_time: "2025-10-25T16:00:00+09:00"
+          - start_time: "2025-10-25T10:00:00+09:00"
+            end_time: "2025-10-25T16:00:00+09:00"
         location: "中央広場 A-5"
-        content_details:
-          menu_items:
-            - name: "たこ焼き（8個）"
-              price: 400
-              description: "もちもち食感の生地に新鮮なたこを使用"
-            - name: "チーズたこ焼き（8個）"
-              price: 450
-              description: "とろけるチーズ入り"
 
     GeneralPlan:
       allOf:
@@ -281,7 +248,6 @@ components:
         - type: object
           required:
             - type
-            - content_details
           properties:
             id:
               type: string
@@ -290,16 +256,6 @@ components:
             type:
               type: string
               enum: [general]
-            content_details:
-              type: object
-              description: 出し物の内容
-              properties:
-                activity_type:
-                  type: string
-                  description: 活動タイプ
-                participation_method:
-                  type: string
-                  description: 参加方法
       example:
         id: "I-001"
         type: "general"
@@ -309,12 +265,9 @@ components:
         is_child_friendly: true
         is_recommended: true
         schedule:
-          start_time: "2025-10-25T10:00:00+09:00"
-          end_time: "2025-10-25T17:00:00+09:00"
+          - start_time: "2025-10-25T10:00:00+09:00"
+            end_time: "2025-10-25T17:00:00+09:00"
         location: "第二校舎 2F 201教室"
-        content_details:
-          activity_type: "ゲーム体験"
-          participation_method: "自由参加、予約不要"
 
     StagePlan:
       allOf:
@@ -322,7 +275,6 @@ components:
         - type: object
           required:
             - type
-            - content_details
           properties:
             id:
               type: string
@@ -331,16 +283,6 @@ components:
             type:
               type: string
               enum: [stage]
-            content_details:
-              type: object
-              description: 出し物の内容
-              properties:
-                performance_type:
-                  type: string
-                  description: パフォーマンスタイプ
-                duration:
-                  type: integer
-                  description: 公演時間（分）
       example:
         id: "S-001"
         type: "stage"
@@ -350,12 +292,9 @@ components:
         is_child_friendly: true
         is_recommended: true
         schedule:
-          start_time: "2025-10-25T13:00:00+09:00"
-          end_time: "2025-10-25T14:00:00+09:00"
+          - start_time: "2025-10-25T13:00:00+09:00"
+            end_time: "2025-10-25T14:00:00+09:00"
         location: "中央ステージ"
-        content_details:
-          performance_type: "音楽ライブ"
-          duration: 60
 
     LaboPlan:
       allOf:
@@ -375,18 +314,6 @@ components:
             is_lab_tour:
               type: boolean
               description: 研究室ツアー参加企画か否か
-            content_details:
-              type: object
-              description: 出し物の内容
-              properties:
-                research_field:
-                  type: string
-                  description: 研究分野
-                activities:
-                  type: array
-                  items:
-                    type: string
-                  description: 体験できる活動
       example:
         id: "L-001"
         type: "labo"
@@ -397,15 +324,9 @@ components:
         is_recommended: true
         is_lab_tour: true
         schedule:
-          start_time: "2025-10-25T10:00:00+09:00"
-          end_time: "2025-10-25T16:00:00+09:00"
+          - start_time: "2025-10-25T10:00:00+09:00"
+            end_time: "2025-10-25T16:00:00+09:00"
         location: "工学部棟 3F 305研究室"
-        content_details:
-          research_field: "ロボット工学、人工知能"
-          activities:
-            - "ロボットアームの操作体験"
-            - "簡単なプログラミング体験"
-            - "研究室の研究成果展示"
 
     Error:
       type: object
