@@ -168,6 +168,8 @@ components:
         - description
         - is_child_friendly
         - is_recommended
+        - schedule
+        - location
       properties:
         id:
           type: string
@@ -175,7 +177,6 @@ components:
         type:
           type: string
           description: 企画のタイプ
-          enum: [booth, general, stage, labo]
         organization_name:
           type: string
           description: 団体名（参加申請時のものを掲載、変更原則なし）
