@@ -137,9 +137,6 @@ components:
           type: string
           enum: [indoor]
           description: 企画実施場所が屋内であることを示す
-        name:
-          type: string
-          description: 企画実施場所の名称
         building:
           type: string
           description: 建物名
