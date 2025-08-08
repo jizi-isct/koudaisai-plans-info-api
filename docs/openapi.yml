@@ -207,10 +207,12 @@ components:
                 format: date-time
                 description: 企画終了時間
         location:
-          oneOf:
-            - $ref: '#/components/schemas/IndoorLocation'
-            - $ref: '#/components/schemas/OutdoorLocation'
-          description: 企画実施場所
+          type: array
+          description: 企画実施場所一覧
+          items:
+            oneOf:
+              - $ref: '#/components/schemas/IndoorLocation'
+              - $ref: '#/components/schemas/OutdoorLocation'
         details:
           $ref: '#/components/schemas/PlanDetails'
           description: 企画の詳細情報
@@ -267,8 +269,8 @@ components:
           - start_time: "2025-10-25T10:00:00+09:00"
             end_time: "2025-10-25T16:00:00+09:00"
         location:
-          type: "outdoor"
-          name: "中央広場 A-5"
+          - type: "outdoor"
+            name: "中央広場 A-5"
 
     GeneralPlan:
       allOf:
@@ -296,10 +298,9 @@ components:
           - start_time: "2025-10-25T10:00:00+09:00"
             end_time: "2025-10-25T17:00:00+09:00"
         location:
-          type: "indoor"
-          name: "第二校舎 2F 201教室"
-          building: "第二校舎"
-          room: "2F 201教室"
+          - type: "indoor"
+            building: "第二校舎"
+            room: "2F 201教室"
 
     StagePlan:
       allOf:
@@ -327,8 +328,8 @@ components:
           - start_time: "2025-10-25T13:00:00+09:00"
             end_time: "2025-10-25T14:00:00+09:00"
         location:
-          type: "outdoor"
-          name: "中央ステージ"
+          - type: "outdoor"
+            name: "中央ステージ"
 
     LaboPlan:
       allOf:
@@ -361,10 +362,9 @@ components:
           - start_time: "2025-10-25T10:00:00+09:00"
             end_time: "2025-10-25T16:00:00+09:00"
         location:
-          type: "indoor"
-          name: "工学部棟 3F 305研究室"
-          building: "工学部棟"
-          room: "3F 305研究室"
+          - type: "indoor"
+            building: "工学部棟"
+            room: "3F 305研究室"
 
     Error:
       type: object
