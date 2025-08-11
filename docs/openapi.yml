@@ -56,10 +56,10 @@ paths:
                     type: array
                     items:
                       oneOf:
-                        - $ref: '#/components/schemas/BoothPlan'
-                        - $ref: '#/components/schemas/GeneralPlan'
-                        - $ref: '#/components/schemas/StagePlan'
-                        - $ref: '#/components/schemas/LaboPlan'
+                        - $ref: '#/components/schemas/BoothPlanRead'
+                        - $ref: '#/components/schemas/GeneralPlanRead'
+                        - $ref: '#/components/schemas/StagePlanRead'
+                        - $ref: '#/components/schemas/LaboPlanRead'
   
   /plans/{planId}:
     get:
@@ -85,16 +85,127 @@ paths:
             application/json:
               schema:
                 oneOf:
-                  - $ref: '#/components/schemas/BoothPlan'
-                  - $ref: '#/components/schemas/GeneralPlan'
-                  - $ref: '#/components/schemas/StagePlan'
-                  - $ref: '#/components/schemas/LaboPlan'
+                  - $ref: '#/components/schemas/BoothPlanRead'
+                  - $ref: '#/components/schemas/GeneralPlanRead'
+                  - $ref: '#/components/schemas/StagePlanRead'
+                  - $ref: '#/components/schemas/LaboPlanRead'
         '404':
           description: 企画が見つかりません
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+    put:
+      summary: 新しい企画を作成
+      description: 指定されたIDで新しい企画を作成します。すでに同じIDの企画が存在する場合はconflictエラーを返します。
+      parameters:
+        - name: planId
+          in: path
+          required: true
+          description: 企画ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/BoothPlanCreate'
+                - $ref: '#/components/schemas/GeneralPlanCreate'
+                - $ref: '#/components/schemas/StagePlanCreate'
+                - $ref: '#/components/schemas/LaboPlanCreate'
+      responses:
+        '201':
+          description: 企画が正常に作成されました
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/BoothPlanRead'
+                  - $ref: '#/components/schemas/GeneralPlanRead'
+                  - $ref: '#/components/schemas/StagePlanRead'
+                  - $ref: '#/components/schemas/LaboPlanRead'
+        '400':
+          description: リクエストが無効です
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: 指定されたIDの企画が既に存在します
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - Bearer: []
+    patch:
+      summary: 企画情報を更新
+      description: 指定されたIDの企画情報を更新します。企画が存在しない場合は404エラーを返します。
+      parameters:
+        - name: planId
+          in: path
+          required: true
+          description: 企画ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/BoothPlanUpdate'
+                - $ref: '#/components/schemas/GeneralPlanUpdate'
+                - $ref: '#/components/schemas/StagePlanUpdate'
+                - $ref: '#/components/schemas/LaboPlanUpdate'
+      responses:
+        '200':
+          description: 企画が正常に更新されました
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/BoothPlanRead'
+                  - $ref: '#/components/schemas/GeneralPlanRead'
+                  - $ref: '#/components/schemas/StagePlanRead'
+                  - $ref: '#/components/schemas/LaboPlanRead'
+        '400':
+          description: リクエストが無効です
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: 企画が見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - Bearer: []
+    delete:
+      summary: 企画を削除
+      description: 指定されたIDの企画を削除します。
+      parameters:
+        - name: planId
+          in: path
+          required: true
+          description: 企画ID
+          schema:
+            type: string
+      responses:
+        '204':
+          description: 企画が正常に削除されました
+        '404':
+          description: 企画が見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - Bearer: []
 
   /plans/{planId}/icon:
     get:
@@ -123,6 +234,71 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+    put:
+      summary: 企画のアイコンを更新
+      description: 指定されたIDの企画のアイコン画像を更新します。
+      parameters:
+        - name: planId
+          in: path
+          required: true
+          description: 企画ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - icon
+              properties:
+                icon:
+                  type: string
+                  format: binary
+                  description: アイコン画像ファイル（PNG, JPEG, GIF形式）
+      responses:
+        '200':
+          description: アイコンが正常に更新されました
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "アイコンが正常に更新されました"
+                  icon_url:
+                    type: string
+                    format: uri
+                    description: 更新されたアイコンのURL
+                    example: "https://storage.example.com/icons/M-001.png"
+        '400':
+          description: リクエストが無効です（ファイル形式が不正、ファイルサイズが大きすぎるなど）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: 企画が見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '413':
+          description: ファイルサイズが大きすぎます
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '415':
+          description: サポートされていないファイル形式です
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - Bearer: []
 
 components:
   schemas:
@@ -158,7 +334,7 @@ components:
           type: string
           description: 企画実施場所の名称
 
-    BasePlan:
+    BasePlanRead:
       type: object
       required:
         - id
@@ -177,6 +353,104 @@ components:
         type:
           type: string
           description: 企画のタイプ
+        organization_name:
+          type: string
+          description: 団体名（参加申請時のものを掲載、変更原則なし）
+        plan_name:
+          type: string
+          description: 企画名（企画内容申請時のものを掲載、変更原則なし）
+        description:
+          type: string
+          description: 企画内容紹介文
+        is_child_friendly:
+          type: boolean
+          description: 子供向け企画か否か
+        is_recommended:
+          type: boolean
+          description: おすすめ企画か否か
+        schedule:
+          type: array
+          description: 企画のスケジュール一覧
+          items:
+            type: object
+            properties:
+              start_time:
+                type: string
+                format: date-time
+                description: 企画開始時間
+              end_time:
+                type: string
+                format: date-time
+                description: 企画終了時間
+        location:
+          type: array
+          description: 企画実施場所一覧
+          items:
+            oneOf:
+              - $ref: '#/components/schemas/IndoorLocation'
+              - $ref: '#/components/schemas/OutdoorLocation'
+        details:
+          $ref: '#/components/schemas/PlanDetails'
+          description: 企画の詳細情報
+
+    BasePlanCreate:
+      type: object
+      required:
+        - type
+        - organization_name
+        - plan_name
+        - description
+        - is_child_friendly
+        - is_recommended
+        - schedule
+        - location
+      properties:
+        type:
+          type: string
+          description: 企画のタイプ
+        organization_name:
+          type: string
+          description: 団体名（参加申請時のものを掲載、変更原則なし）
+        plan_name:
+          type: string
+          description: 企画名（企画内容申請時のものを掲載、変更原則なし）
+        description:
+          type: string
+          description: 企画内容紹介文
+        is_child_friendly:
+          type: boolean
+          description: 子供向け企画か否か
+        is_recommended:
+          type: boolean
+          description: おすすめ企画か否か
+        schedule:
+          type: array
+          description: 企画のスケジュール一覧
+          items:
+            type: object
+            properties:
+              start_time:
+                type: string
+                format: date-time
+                description: 企画開始時間
+              end_time:
+                type: string
+                format: date-time
+                description: 企画終了時間
+        location:
+          type: array
+          description: 企画実施場所一覧
+          items:
+            oneOf:
+              - $ref: '#/components/schemas/IndoorLocation'
+              - $ref: '#/components/schemas/OutdoorLocation'
+        details:
+          $ref: '#/components/schemas/PlanDetails'
+          description: 企画の詳細情報
+
+    BasePlanUpdate:
+      type: object
+      properties:
         organization_name:
           type: string
           description: 団体名（参加申請時のものを掲載、変更原則なし）
@@ -243,9 +517,9 @@ components:
           type: string
           description: 追加情報（マークダウン形式）
 
-    BoothPlan:
+    BoothPlanRead:
       allOf:
-        - $ref: '#/components/schemas/BasePlan'
+        - $ref: '#/components/schemas/BasePlanRead'
         - type: object
           required:
             - type
@@ -257,24 +531,26 @@ components:
             type:
               type: string
               enum: [booth]
-      example:
-        id: "M-001"
-        type: "booth"
-        organization_name: "料理研究会"
-        plan_name: "美味しいたこ焼き"
-        description: "伝統のレシピで作る本格的なたこ焼きをお楽しみください。"
-        is_child_friendly: true
-        is_recommended: true
-        schedule:
-          - start_time: "2025-10-25T10:00:00+09:00"
-            end_time: "2025-10-25T16:00:00+09:00"
-        location:
-          - type: "outdoor"
-            name: "中央広場 A-5"
 
-    GeneralPlan:
+    BoothPlanCreate:
       allOf:
-        - $ref: '#/components/schemas/BasePlan'
+        - $ref: '#/components/schemas/BasePlanCreate'
+        - type: object
+          required:
+            - type
+          properties:
+            type:
+              type: string
+              enum: [booth]
+
+    BoothPlanUpdate:
+      allOf:
+        - $ref: '#/components/schemas/BasePlanUpdate'
+        - type: object
+
+    GeneralPlanRead:
+      allOf:
+        - $ref: '#/components/schemas/BasePlanRead'
         - type: object
           required:
             - type
@@ -302,9 +578,25 @@ components:
             building: "第二校舎"
             room: "2F 201教室"
 
-    StagePlan:
+    GeneralPlanCreate:
       allOf:
-        - $ref: '#/components/schemas/BasePlan'
+        - $ref: '#/components/schemas/BasePlanCreate'
+        - type: object
+          required:
+            - type
+          properties:
+            type:
+              type: string
+              enum: [general]
+
+    GeneralPlanUpdate:
+      allOf:
+        - $ref: '#/components/schemas/BasePlanUpdate'
+        - type: object
+
+    StagePlanRead:
+      allOf:
+        - $ref: '#/components/schemas/BasePlanRead'
         - type: object
           required:
             - type
@@ -331,9 +623,25 @@ components:
           - type: "outdoor"
             name: "中央ステージ"
 
-    LaboPlan:
+    StagePlanCreate:
       allOf:
-        - $ref: '#/components/schemas/BasePlan'
+        - $ref: '#/components/schemas/BasePlanCreate'
+        - type: object
+          required:
+            - type
+          properties:
+            type:
+              type: string
+              enum: [stage]
+
+    StagePlanUpdate:
+      allOf:
+        - $ref: '#/components/schemas/BasePlanUpdate'
+        - type: object
+
+    LaboPlanRead:
+      allOf:
+        - $ref: '#/components/schemas/BasePlanRead'
         - type: object
           required:
             - type
@@ -366,6 +674,30 @@ components:
             building: "工学部棟"
             room: "3F 305研究室"
 
+    LaboPlanCreate:
+      allOf:
+        - $ref: '#/components/schemas/BasePlanCreate'
+        - type: object
+          required:
+            - type
+            - is_lab_tour
+          properties:
+            type:
+              type: string
+              enum: [labo]
+            is_lab_tour:
+              type: boolean
+              description: 研究室ツアー参加企画か否か
+
+    LaboPlanUpdate:
+      allOf:
+        - $ref: '#/components/schemas/BasePlanUpdate'
+        - type: object
+          properties:
+            is_lab_tour:
+              type: boolean
+              description: 研究室ツアー参加企画か否か
+
     Error:
       type: object
       required:
@@ -377,3 +709,7 @@ components:
           format: int32
         message:
           type: string
+  securitySchemes:
+    Bearer:
+      type: http
+      scheme: bearer
