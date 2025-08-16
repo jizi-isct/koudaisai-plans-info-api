@@ -713,3 +713,5 @@ components:
     Bearer:
       type: http
       scheme: bearer
+      bearerFormat: JWT
+      description: "編集権限"
