@@ -4,3 +4,13 @@ compatibility_date = "2025-08-02"
 
 [build]
 command = "cargo install -q worker-build && worker-build --release"
+
+[vars]
+JWKS_URL = "https://auth2024.jizi.jp/realms/JIZI-Portal/protocol/openid-connect/certs"
+
+[[kv_namespaces]]
+binding = "PLANS"
+id = "431c204df59d48579d06bb59f4dfad6a"
+
+[observability.logs]
+enabled = true
