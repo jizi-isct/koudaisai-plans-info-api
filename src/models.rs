@@ -1,5 +1,4 @@
 use crate::util::{deep_merge, kv_bulk_get_values};
-use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use worker::kv::{KvError, KvStore};
@@ -14,9 +13,42 @@ pub enum Location {
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-pub struct Schedule {
-    pub start_time: DateTime<Utc>,
-    pub end_time: DateTime<Utc>,
+pub struct DaySchedule {
+    pub start_time: String, // HH:mm format
+    pub end_time: String,   // HH:mm format
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct ScheduleCreate {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub day1: Option<DaySchedule>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub day2: Option<DaySchedule>,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct ScheduleRead {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub day1: Option<DaySchedule>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub day2: Option<DaySchedule>,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct ScheduleUpdate {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub day1: Option<Option<DaySchedule>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub day2: Option<Option<DaySchedule>>,
+}
+
+impl Into<ScheduleRead> for ScheduleCreate {
+    fn into(self) -> ScheduleRead {
+        ScheduleRead {
+            day1: self.day1,
+            day2: self.day2,
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -98,7 +130,7 @@ pub struct PlanCreate {
     pub description: String,
     pub is_child_friendly: bool,
     pub is_recommended: bool,
-    pub schedule: Vec<Schedule>,
+    pub schedule: ScheduleCreate,
     pub location: Vec<Location>,
 }
 
@@ -112,7 +144,7 @@ pub struct PlanRead {
     pub description: String,
     pub is_child_friendly: bool,
     pub is_recommended: bool,
-    pub schedule: Vec<Schedule>,
+    pub schedule: ScheduleRead,
     pub location: Vec<Location>,
 }
 
@@ -131,7 +163,7 @@ pub struct PlanUpdate {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub is_recommended: Option<bool>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub schedule: Option<Vec<Schedule>>,
+    pub schedule: Option<ScheduleUpdate>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub location: Option<Vec<Location>>,
 }
@@ -165,7 +197,7 @@ impl PlanCreate {
                 description: self.description,
                 is_child_friendly: self.is_child_friendly,
                 is_recommended: self.is_recommended,
-                schedule: self.schedule,
+                schedule: self.schedule.into(),
                 location: self.location,
             })
             .unwrap(),

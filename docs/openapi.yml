@@ -402,19 +402,43 @@ components:
           type: boolean
           description: おすすめ企画か否か
         schedule:
-          type: array
-          description: 企画のスケジュール一覧
-          items:
-            type: object
-            properties:
-              start_time:
-                type: string
-                format: date-time
-                description: 企画開始時間
-              end_time:
-                type: string
-                format: date-time
-                description: 企画終了時間
+          type: object
+          description: 企画のスケジュール
+          properties:
+            day1:
+              type: object
+              nullable: true
+              properties:
+                start_time:
+                  type: string
+                  pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$'
+                  description: 企画開始時間（HH:mm形式）
+                  example: "10:00"
+                end_time:
+                  type: string
+                  pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$'
+                  description: 企画終了時間（HH:mm形式）
+                  example: "17:00"
+              required:
+                - start_time
+                - end_time
+            day2:
+              type: object
+              nullable: true
+              properties:
+                start_time:
+                  type: string
+                  pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$'
+                  description: 企画開始時間（HH:mm形式）
+                  example: "11:00"
+                end_time:
+                  type: string
+                  pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$'
+                  description: 企画終了時間（HH:mm形式）
+                  example: "16:00"
+              required:
+                - start_time
+                - end_time
         location:
           type: array
           description: 企画実施場所一覧
@@ -454,19 +478,43 @@ components:
           type: boolean
           description: おすすめ企画か否か
         schedule:
-          type: array
-          description: 企画のスケジュール一覧
-          items:
-            type: object
-            properties:
-              start_time:
-                type: string
-                format: date-time
-                description: 企画開始時間
-              end_time:
-                type: string
-                format: date-time
-                description: 企画終了時間
+          type: object
+          description: 企画のスケジュール
+          properties:
+            day1:
+              type: object
+              nullable: true
+              properties:
+                start_time:
+                  type: string
+                  pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$'
+                  description: 企画開始時間（HH:mm形式）
+                  example: "10:00"
+                end_time:
+                  type: string
+                  pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$'
+                  description: 企画終了時間（HH:mm形式）
+                  example: "17:00"
+              required:
+                - start_time
+                - end_time
+            day2:
+              type: object
+              nullable: true
+              properties:
+                start_time:
+                  type: string
+                  pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$'
+                  description: 企画開始時間（HH:mm形式）
+                  example: "11:00"
+                end_time:
+                  type: string
+                  pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$'
+                  description: 企画終了時間（HH:mm形式）
+                  example: "16:00"
+              required:
+                - start_time
+                - end_time
         location:
           type: array
           description: 企画実施場所一覧
@@ -494,19 +542,43 @@ components:
           type: boolean
           description: おすすめ企画か否か
         schedule:
-          type: array
-          description: 企画のスケジュール一覧
-          items:
-            type: object
-            properties:
-              start_time:
-                type: string
-                format: date-time
-                description: 企画開始時間
-              end_time:
-                type: string
-                format: date-time
-                description: 企画終了時間
+          type: object
+          description: 企画のスケジュール
+          properties:
+            day1:
+              type: object
+              nullable: true
+              properties:
+                start_time:
+                  type: string
+                  pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$'
+                  description: 企画開始時間（HH:mm形式）
+                  example: "10:00"
+                end_time:
+                  type: string
+                  pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$'
+                  description: 企画終了時間（HH:mm形式）
+                  example: "17:00"
+              required:
+                - start_time
+                - end_time
+            day2:
+              type: object
+              nullable: true
+              properties:
+                start_time:
+                  type: string
+                  pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$'
+                  description: 企画開始時間（HH:mm形式）
+                  example: "11:00"
+                end_time:
+                  type: string
+                  pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$'
+                  description: 企画終了時間（HH:mm形式）
+                  example: "16:00"
+              required:
+                - start_time
+                - end_time
         location:
           type: array
           description: 企画実施場所一覧
@@ -595,8 +667,9 @@ components:
         is_child_friendly: true
         is_recommended: true
         schedule:
-          - start_time: "2025-10-25T10:00:00+09:00"
-            end_time: "2025-10-25T17:00:00+09:00"
+          day1:
+            start_time: "10:00"
+            end_time: "17:00"
         location:
           - type: "indoor"
             building: "第二校舎"
@@ -641,8 +714,9 @@ components:
         is_child_friendly: true
         is_recommended: true
         schedule:
-          - start_time: "2025-10-25T13:00:00+09:00"
-            end_time: "2025-10-25T14:00:00+09:00"
+          day1:
+            start_time: "13:00"
+            end_time: "14:00"
         location:
           - type: "outdoor"
             name: "中央ステージ"
@@ -691,8 +765,9 @@ components:
         is_recommended: true
         is_lab_tour: true
         schedule:
-          - start_time: "2025-10-25T10:00:00+09:00"
-            end_time: "2025-10-25T16:00:00+09:00"
+          day1:
+            start_time: "10:00"
+            end_time: "16:00"
         location:
           - type: "indoor"
             building: "工学部棟"
