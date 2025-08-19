@@ -298,7 +298,7 @@ impl PlanUpdate {
         let patch = serde_json::to_value(self.clone())?;
         deep_merge(&mut plan, patch);
 
-        kv.put(id, plan)?.execute().await?;
+        kv.put(id, serde_json::to_string(&plan)?)?.execute().await?;
 
         Ok(())
     }
