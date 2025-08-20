@@ -12,5 +12,9 @@ JWKS_URL = "https://auth2024.jizi.jp/realms/JIZI-Portal/protocol/openid-connect/
 binding = "PLANS"
 id = "431c204df59d48579d06bb59f4dfad6a"
 
+[[r2_buckets]]
+bucket_name = "plan-icons"
+binding = "plan_icons"
+
 [observability.logs]
 enabled = true

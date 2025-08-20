@@ -272,36 +272,8 @@ paths:
 
   /plans/{planId}/icon:
     get:
-      summary: 企画のアイコンダウンロードURLを取得
-      description: 指定されたIDの企画のアイコン画像のダウンロードURLにリダイレクトします
-      parameters:
-        - name: planId
-          in: path
-          required: true
-          description: 企画ID
-          schema:
-            type: string
-      responses:
-        '302':
-          description: アイコンダウンロードURLへのリダイレクト
-          headers:
-            Location:
-              description: アイコン画像のダウンロードURL
-              schema:
-                type: string
-                format: uri
-                example: "https://storage.example.com/icons/M-001.png?expires=1234567890&signature=abc123"
-        '404':
-          description: 企画またはアイコンが見つかりません
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
-  /plans/{planId}/icon/upload-url:
-    get:
-      summary: 企画のアイコンアップロード用URLを取得
-      description: 指定されたIDの企画のアイコン画像をアップロードするためのURLを取得します。
+      summary: 企画のアイコンを取得
+      description: 指定されたIDの企画のアイコン画像を直接ダウンロードします
       parameters:
         - name: planId
           in: path
@@ -311,21 +283,65 @@ paths:
             type: string
       responses:
         '200':
-          description: アップロード用URL
+          description: アイコン画像ファイル
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            image/gif:
+              schema:
+                type: string
+                format: binary
+            image/webp:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: 企画またはアイコンが見つかりません
           content:
             application/json:
               schema:
-                type: object
-                required:
-                  - upload_url
-                properties:
-                  upload_url:
-                    type: string
-                    format: uri
-                    description: アイコン画像をアップロードするためのURL
-                    example: "https://storage.example.com/upload/icons/M-001.png?signature=abc123&expires=1234567890"
-        '404':
-          description: 企画が見つかりません
+                $ref: '#/components/schemas/Error'
+    put:
+      summary: 企画のアイコンをアップロード
+      description: |-
+        指定されたIDの企画のアイコン画像をアップロードします．アップロード時にアイコン画像が最適化されます．
+      parameters:
+        - name: planId
+          in: path
+          required: true
+          description: 企画ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          image/png:
+            schema:
+              type: string
+              format: binary
+          image/jpeg:
+            schema:
+              type: string
+              format: binary
+          image/gif:
+            schema:
+              type: string
+              format: binary
+          image/webp:
+            schema:
+              type: string
+              format: binary
+      responses:
+        '204':
+          description: アイコンが正常にアップロードされました
+        '502':
+          description: 画像最適化に失敗しました
           content:
             application/json:
               schema:

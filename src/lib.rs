@@ -1,16 +1,21 @@
+mod icon;
 mod jwks;
 mod jwt_verifier;
 mod models;
 mod util;
 
+use crate::icon::{put_icon, PutIconError};
 use crate::jwt_verifier::JwtVerifier;
 use crate::models::{
     PlanCreate, PlanCreateError, PlanRead, PlanReadError, PlanTypeRead, PlanUpdate, PlanUpdateError,
 };
+use wasm_bindgen::JsValue;
 use worker::*;
 
 const VAR_JWKS_URL: &str = "JWKS_URL";
 const KV_PLANS: &str = "PLANS";
+const R2_PLAN_IMAGES: &str = "plan_icons";
+const IMG_SIZES: &[u32] = &[128, 256, 512];
 
 #[event(fetch)]
 async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
@@ -256,6 +261,66 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                 }))?
                 .with_status(500)),
             }
+        })
+        .put_async("/v1/plans/:plan_id/icon", |mut req, ctx| async move {
+            let plan_id = ctx.param("plan_id").unwrap();
+            let bucket = ctx.env.bucket(R2_PLAN_IMAGES)?;
+
+            // ヘッダー検証
+            let ct = req.headers().get("content-type")?.unwrap_or_default();
+            if !ct.starts_with("image/") {
+                return Response::error("content-type must be image/*", 415);
+            }
+            let bytes = req.bytes().await?;
+            if bytes.len() > 10 * 1024 * 1024 {
+                return Response::error("payload too large", 413);
+            }
+
+            // 保存
+            match put_icon(bucket, plan_id, bytes, ct).await {
+                Ok(_) => Ok(Response::empty()?.with_status(204)),
+                Err(PutIconError::WorkerError(e)) => Ok(Response::from_json(&serde_json::json!({
+                    "code": 500,
+                    "message": format!("Internal error occurred: {}", e.to_string())
+                }))?
+                .with_status(500)),
+                Err(PutIconError::TransformError(e)) => {
+                    Ok(Response::from_json(&serde_json::json!({
+                        "code": 502,
+                        "message": e
+                    }))?
+                    .with_status(502))
+                }
+            }
+        })
+        .get_async("/v1/plans/:plan_id/icon", |req, ctx| async move {
+            let plan_id = ctx.param("plan_id").unwrap();
+            let bucket = ctx.env.bucket(R2_PLAN_IMAGES)?;
+
+            let object = bucket
+                .get(format!("{}/original", plan_id))
+                .execute()
+                .await?;
+
+            if object.is_none() {
+                return Ok(Response::from_json(&serde_json::json!({
+                    "code": 404,
+                    "message": "Icon not found."
+                }))?
+                .with_status(404));
+            }
+
+            // レスポンス
+            let object = object.unwrap();
+            let headers = Headers::new();
+            object.write_http_metadata(headers.clone())?;
+            headers.set("etag", &*object.http_etag())?;
+            let Some(body) = object.body() else {
+                return Err(worker::Error::Internal(JsValue::from_str("body is none")));
+            };
+            Ok(Response::from_bytes(body.bytes().await?)?
+                .with_headers(headers)
+                .with_status(200))
         })
         .run(req, env)
         .await
