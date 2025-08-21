@@ -348,6 +348,50 @@ paths:
                 $ref: '#/components/schemas/Error'
       security:
         - Bearer: []
+  /plans/{planId}/icon:import:
+    post:
+      summary: URLからアイコンをインポート
+      description: 指定されたURLからアイコンをダウンロードして企画のアイコンとして設定します
+      parameters:
+        - name: planId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 企画の一意識別子
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - url
+              properties:
+                url:
+                  type: string
+                  format: uri
+                  description: インポートするアイコンのURL
+                  example: "https://example.com/icon.png"
+      responses:
+        '204':
+          description: アイコンが正常にインポートされました
+        '400':
+          description: 無効なリクエスト（URLが無効など）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '502':
+          description: アイコンのダウンロードまたは処理に失敗しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - Bearer: [ ]
+
+
 
 components:
   schemas:
