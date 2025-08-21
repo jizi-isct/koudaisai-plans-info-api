@@ -179,6 +179,58 @@ paths:
       security:
         - Bearer: []
 
+  /plans:bulk:
+    post:
+      summary: 企画の一括作成
+      description: 指定されたIDの企画を複数まとめて作成します。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: IDと企画のマップ（キーがID、値が企画オブジェクト）
+              additionalProperties:
+                $ref: '#/components/schemas/BasePlanCreate'
+      responses:
+        '201':
+          description: 企画が正常に一括作成されました
+        '207':
+          description: 一部の企画作成に失敗しました
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: array
+                    description: 失敗したエントリーのエラー情報
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/Error'
+                        - type: object
+                          properties:
+                            plan_id:
+                              type: string
+                              description: 失敗した企画のID
+                          required:
+                            - plan_id
+        '400':
+          description: リクエストが無効です
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: 企画が見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - Bearer: [ ]
+
+
   /plans/{planId}/details:
     get:
       summary: 企画の詳細情報を取得

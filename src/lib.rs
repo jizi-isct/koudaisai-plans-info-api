@@ -262,6 +262,66 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                 .with_status(500)),
             }
         })
+        // POST /plans:bulk - 企画の一括作成
+        .post_async("/v1/plans:bulk", |mut req, ctx| async move {
+            console_debug!("POST /plans:bulk");
+
+            // JWT認証チェック
+            let jwt_verifier = JwtVerifier::new(&*ctx.env.var(VAR_JWKS_URL)?.to_string())
+                .await
+                .unwrap();
+            if jwt_verifier
+                .verify_token_in_headers(&req.headers())
+                .is_err()
+            {
+                return Ok(Response::from_bytes("Unauthorized".into())?.with_status(401));
+            }
+
+            match req.json::<std::collections::HashMap<String, PlanCreate>>().await {
+                Ok(plans_map) => {
+                    let kv = ctx.env.kv(KV_PLANS)?;
+                    let mut errors = Vec::new();
+
+                    // すべてのエントリーに対して作成を試行
+                    for (id, plan_create) in plans_map {
+                        match plan_create.create(kv.clone(), &id).await {
+                            Ok(_) => {
+                                // 企画作成成功
+                            }
+                            Err(PlanCreateError::Conflict) => {
+                                errors.push(serde_json::json!({
+                                    "plan_id": id,
+                                    "code": 409,
+                                    "message": format!("指定されたID「{}」の企画が既に存在します", id)
+                                }));
+                            }
+                            Err(PlanCreateError::KvError(_)) => {
+                                errors.push(serde_json::json!({
+                                    "plan_id": id,
+                                    "code": 500,
+                                    "message": format!("ID「{}」の企画作成中に内部エラーが発生しました", id)
+                                }));
+                            }
+                        }
+                    }
+
+                    if errors.is_empty() {
+                        // 全て成功した場合は201 Createdで空のレスポンスを返す
+                        Ok(Response::empty()?.with_status(201))
+                    } else {
+                        // 失敗したエントリーがある場合は207 Multi-Statusでエラー一覧を返す
+                        Ok(Response::from_json(&serde_json::json!({
+                            "errors": errors
+                        }))?.with_status(207))
+                    }
+                }
+                Err(e) => Ok(Response::from_json(&serde_json::json!({
+                    "code": 400,
+                    "message": e.to_string()
+                }))?
+                    .with_status(400)),
+            }
+        })
         .put_async("/v1/plans/:plan_id/icon", |mut req, ctx| async move {
             let plan_id = ctx.param("plan_id").unwrap();
             let bucket = ctx.env.bucket(R2_PLAN_IMAGES)?;
