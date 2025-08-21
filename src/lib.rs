@@ -322,6 +322,121 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                 .with_headers(headers)
                 .with_status(200))
         })
+        .post_async(
+            "/v1/plans/:plan_id/icon:import",
+            |mut req, ctx| async move {
+                let plan_id = ctx.param("plan_id").unwrap();
+                let bucket = ctx.env.bucket(R2_PLAN_IMAGES)?;
+
+                // JWT認証チェック
+                let jwt_verifier = JwtVerifier::new(&*ctx.env.var(VAR_JWKS_URL)?.to_string())
+                    .await
+                    .unwrap();
+                if jwt_verifier
+                    .verify_token_in_headers(&req.headers())
+                    .is_err()
+                {
+                    return Ok(Response::from_bytes("Unauthorized".into())?.with_status(401));
+                }
+
+                // リクエストボディからURLを取得
+                let body: serde_json::Value = match req.json().await {
+                    Ok(body) => body,
+                    Err(_) => {
+                        return Ok(Response::from_json(&serde_json::json!({
+                            "code": 400,
+                            "message": "Invalid JSON body"
+                        }))?
+                        .with_status(400));
+                    }
+                };
+
+                let url = match body.get("url").and_then(|u| u.as_str()) {
+                    Some(url) => url,
+                    None => {
+                        return Ok(Response::from_json(&serde_json::json!({
+                            "code": 400,
+                            "message": "Missing 'url' field in request body"
+                        }))?
+                        .with_status(400));
+                    }
+                };
+
+                // URLからファイルをダウンロード
+                let download_req = match Request::new(url, worker::Method::Get) {
+                    Ok(req) => req,
+                    Err(_) => {
+                        return Ok(Response::from_json(&serde_json::json!({
+                            "code": 400,
+                            "message": "Invalid URL"
+                        }))?
+                        .with_status(400));
+                    }
+                };
+
+                let mut download_resp = match worker::Fetch::Request(download_req).send().await {
+                    Ok(resp) => resp,
+                    Err(_) => {
+                        return Ok(Response::from_json(&serde_json::json!({
+                            "code": 502,
+                            "message": "Failed to download image from URL"
+                        }))?
+                        .with_status(502));
+                    }
+                };
+
+                if download_resp.status_code() < 200 || download_resp.status_code() >= 300 {
+                    return Ok(Response::from_json(&serde_json::json!({
+                        "code": 502,
+                        "message": "Failed to download image: HTTP error"
+                    }))?
+                    .with_status(502));
+                }
+
+                // Content-Typeをチェック
+                let ct = download_resp
+                    .headers()
+                    .get("content-type")?
+                    .unwrap_or_default();
+                if !ct.starts_with("image/") {
+                    return Ok(Response::from_json(&serde_json::json!({
+                        "code": 400,
+                        "message": "Downloaded content is not an image"
+                    }))?
+                    .with_status(400));
+                }
+
+                let bytes = match download_resp.bytes().await {
+                    Ok(bytes) => bytes,
+                    Err(_) => {
+                        return Ok(Response::from_json(&serde_json::json!({
+                            "code": 502,
+                            "message": "Failed to read image data"
+                        }))?
+                        .with_status(502));
+                    }
+                };
+
+                // アイコンを保存
+                match put_icon(bucket, plan_id, bytes, ct).await {
+                    Ok(_) => Ok(Response::empty()?.with_status(204)),
+                    Err(PutIconError::WorkerError(e)) => {
+                        Ok(Response::from_json(&serde_json::json!({
+                            "code": 500,
+                            "message": format!("Internal error occurred: {}", e.to_string())
+                        }))?
+                        .with_status(500))
+                    }
+                    Err(PutIconError::TransformError(e)) => {
+                        Ok(Response::from_json(&serde_json::json!({
+                            "code": 502,
+                            "message": e
+                        }))?
+                        .with_status(502))
+                    }
+                }
+            },
+        )
         .run(req, env)
         .await
 }
