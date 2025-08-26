@@ -73,3 +73,12 @@ pub fn deep_merge(a: &mut Value, b: Value) {
         }
     }
 }
+
+pub fn extension_from_content_type(ct: &str) -> &'static str {
+    match ct {
+        "image/png" => "png",
+        "image/jpeg" => "jpg",
+        "image/webp" => "webp",
+        _ => "bin",
+    }
+}

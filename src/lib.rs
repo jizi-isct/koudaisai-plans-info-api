@@ -2,6 +2,7 @@ mod icon;
 mod jwks;
 mod jwt_verifier;
 mod models;
+mod service;
 mod util;
 
 use crate::icon::{put_icon, PutIconError};
@@ -9,6 +10,7 @@ use crate::jwt_verifier::JwtVerifier;
 use crate::models::{
     PlanCreate, PlanCreateError, PlanRead, PlanReadError, PlanTypeRead, PlanUpdate, PlanUpdateError,
 };
+use crate::service::discord::Discord;
 use wasm_bindgen::JsValue;
 use worker::*;
 
@@ -147,8 +149,20 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
             match req.json::<PlanCreate>().await {
                 Ok(plan_create) => {
                     let kv = ctx.env.kv(KV_PLANS)?;
-                    match plan_create.create(kv, plan_id).await {
+                    match plan_create.clone().create(kv, plan_id).await {
                         Ok(_) => {
+                            // Discord通知
+                            let discord = Discord::new_from_env(&ctx.env);
+                            match discord.send_create_plan(
+                                plan_id.into(),
+                                &plan_create,
+                            ).await {
+                                Ok(_) => {}
+                                Err(err) => {
+                                    console_error!("Discord webhook error: {}", err)
+                                }
+                            }
+
                             // 企画作成成功時は204 No Contentを返す
                             Ok(Response::empty()?.with_status(204))
                         }
@@ -194,8 +208,19 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
 
             match req.json::<PlanUpdate>().await {
                 Ok(plan_update) => {
-                    match plan_update.update(kv, plan_id).await {
+                    match plan_update.clone().update(kv, plan_id).await {
                         Ok(_) => {
+                            // discord通知
+                            let discord = Discord::new_from_env(&ctx.env);
+                            match discord.send_update_plan(
+                                plan_id.into(),
+                                &plan_update,
+                            ).await {
+                                Ok(_) => {},
+                                Err(err) => {
+                                    console_error!("Discord webhook error: {}", err)
+                                }
+                            }
                             // 企画更新成功時は204 No Contentを返す
                             Ok(Response::empty()?.with_status(204))
                         }
@@ -242,7 +267,20 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                 Ok(_) => {
                     // 削除実行
                     match kv.delete(plan_id).await {
-                        Ok(_) => Ok(Response::empty()?.with_status(204)),
+                        Ok(_) => {
+                            // discord通知
+                            let discord = Discord::new_from_env(&ctx.env);
+                            match discord.send_delete_plan(
+                                plan_id.into(),
+                            ).await {
+                                Ok(_) => {},
+                                Err(err) => {
+                                    console_error!("Discord webhook error: {}", err)
+                                }
+                            }
+
+                            Ok(Response::empty()?.with_status(204))
+                        },
                         Err(_) => Ok(Response::from_json(&serde_json::json!({
                             "code": 500,
                             "message": "内部エラーが発生しました"
@@ -306,6 +344,15 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                     }
 
                     if errors.is_empty() {
+                        // discord
+                        let discord = Discord::new_from_env(&ctx.env);
+                        match discord.send_bulk_create_plan().await {
+                            Ok(_) => {},
+                            Err(err) => {
+                                console_error!("Discord webhook error: {}", err)
+                            }
+                        }
+
                         // 全て成功した場合は201 Createdで空のレスポンスを返す
                         Ok(Response::empty()?.with_status(201))
                     } else {
@@ -337,7 +384,8 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
             }
 
             // 保存
-            match put_icon(bucket, plan_id, bytes, ct).await {
+            let discord = Discord::new_from_env(&ctx.env);
+            match put_icon(bucket, plan_id, bytes, ct, discord).await {
                 Ok(_) => Ok(Response::empty()?.with_status(204)),
                 Err(PutIconError::WorkerError(e)) => Ok(Response::from_json(&serde_json::json!({
                     "code": 500,
@@ -478,7 +526,8 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                 };
 
                 // アイコンを保存
-                match put_icon(bucket, plan_id, bytes, ct).await {
+                let discord = Discord::new_from_env(&ctx.env);
+                match put_icon(bucket, plan_id, bytes, ct, discord).await {
                     Ok(_) => Ok(Response::empty()?.with_status(204)),
                     Err(PutIconError::WorkerError(e)) => {
                         Ok(Response::from_json(&serde_json::json!({
