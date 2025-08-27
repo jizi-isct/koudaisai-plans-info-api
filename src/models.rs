@@ -265,6 +265,8 @@ impl PlanRead {
             values.append(&mut values_chunk);
         }
 
+        values.sort_by(|a, b| a.id.cmp(&b.id));
+
         Ok(values)
     }
 }
