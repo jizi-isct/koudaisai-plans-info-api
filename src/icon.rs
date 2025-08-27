@@ -1,15 +1,11 @@
 use crate::service::discord::Discord;
+use thiserror::Error;
 use worker::{console_error, Bucket, Data, HttpMetadata};
 
+#[derive(Debug, Error)]
 pub enum PutIconError {
-    WorkerError(worker::Error),
-    TransformError(String),
-}
-
-impl From<worker::Error> for PutIconError {
-    fn from(err: worker::Error) -> Self {
-        PutIconError::WorkerError(err)
-    }
+    #[error(transparent)]
+    WorkerError(#[from] worker::Error),
 }
 
 /// アイコンをr2 bucketに保存する

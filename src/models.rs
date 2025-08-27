@@ -1,6 +1,7 @@
 use crate::util::{deep_merge, kv_bulk_get_values};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use thiserror::Error;
 use worker::kv::{KvError, KvStore};
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -168,15 +169,12 @@ pub struct PlanUpdate {
     pub location: Option<Vec<Location>>,
 }
 
+#[derive(Error, Debug)]
 pub enum PlanCreateError {
+    #[error("Conflict")]
     Conflict,
-    KvError(KvError),
-}
-
-impl From<KvError> for PlanCreateError {
-    fn from(e: KvError) -> Self {
-        PlanCreateError::KvError(e)
-    }
+    #[error(transparent)]
+    KvError(#[from] KvError),
 }
 
 impl PlanCreate {
@@ -213,6 +211,7 @@ pub enum PlanReadError {
     NotFound,
     KvError(KvError),
     WorkerError(worker::Error),
+    GetKeysError(GetKeysError),
 }
 
 impl From<KvError> for PlanReadError {
@@ -227,6 +226,12 @@ impl From<worker::Error> for PlanReadError {
     }
 }
 
+impl From<GetKeysError> for PlanReadError {
+    fn from(e: GetKeysError) -> Self {
+        PlanReadError::GetKeysError(e)
+    }
+}
+
 impl PlanRead {
     pub async fn read(kv: KvStore, id: &str) -> Result<PlanRead, PlanReadError> {
         match kv.get(id).json::<PlanRead>().await? {
@@ -238,55 +243,42 @@ impl PlanRead {
     pub async fn read_all(kv: &KvStore) -> Result<Vec<PlanRead>, PlanReadError> {
         let mut values = vec![];
 
-        loop {
-            let list = kv.list().execute().await?;
-            // bulk_getの最大数が100なのでkeyを100ごとに分割する
-            for chunk in list.keys.chunks(100) {
-                let keys = chunk
-                    .iter()
-                    .map(|key| key.name.clone())
-                    .collect::<Vec<String>>();
-                let values_chunk = kv_bulk_get_values::<PlanRead>(kv, keys.as_slice(), "json")
-                    .await?
-                    .into_values()
-                    .collect::<Vec<Option<PlanRead>>>();
-                let mut values_chunk = values_chunk
-                    .into_iter()
-                    .filter_map(|value| value)
-                    .collect::<Vec<PlanRead>>();
-                values.append(&mut values_chunk);
-            }
-            if list.list_complete {
-                break;
-            }
+        // Get keys from cache instead of direct kv.list()
+        let all_keys = get_keys(kv).await?;
+
+        // Filter out cache keys and process in chunks of 100
+        let plan_keys: Vec<String> = all_keys
+            .into_iter()
+            .filter(|key| !key.starts_with("keys:"))
+            .collect();
+
+        // bulk_getの最大数が100なのでkeyを100ごとに分割する
+        for chunk in plan_keys.chunks(100) {
+            let values_chunk = kv_bulk_get_values::<PlanRead>(kv, chunk, "json")
+                .await?
+                .into_values()
+                .collect::<Vec<Option<PlanRead>>>();
+            let mut values_chunk = values_chunk
+                .into_iter()
+                .filter_map(|value| value)
+                .collect::<Vec<PlanRead>>();
+            values.append(&mut values_chunk);
         }
+
         Ok(values)
     }
 }
 
+#[derive(Error, Debug)]
 pub enum PlanUpdateError {
+    #[error("Not found")]
     NotFound,
-    KvError(KvError),
-    WorkerError(worker::Error),
-    SerdeError(serde_json::Error),
-}
-
-impl From<KvError> for PlanUpdateError {
-    fn from(e: KvError) -> Self {
-        PlanUpdateError::KvError(e)
-    }
-}
-
-impl From<worker::Error> for PlanUpdateError {
-    fn from(e: worker::Error) -> Self {
-        Self::WorkerError(e)
-    }
-}
-
-impl From<serde_json::Error> for PlanUpdateError {
-    fn from(e: serde_json::Error) -> Self {
-        Self::SerdeError(e)
-    }
+    #[error(transparent)]
+    KvError(#[from] KvError),
+    #[error(transparent)]
+    WorkerError(#[from] worker::Error),
+    #[error(transparent)]
+    SerdeError(#[from] serde_json::Error),
 }
 
 impl PlanUpdate {
@@ -301,5 +293,63 @@ impl PlanUpdate {
         kv.put(id, serde_json::to_string(&plan)?)?.execute().await?;
 
         Ok(())
+    }
+}
+
+#[derive(Error, Debug)]
+pub enum PutKeysError {
+    #[error(transparent)]
+    WorkersError(#[from] worker::Error),
+    #[error(transparent)]
+    KvError(#[from] KvError),
+    #[error(transparent)]
+    SerdeError(#[from] serde_json::Error),
+}
+
+pub async fn put_keys(kv: &KvStore) -> Result<(), PutKeysError> {
+    let mut keys = vec![];
+    loop {
+        let list = kv.list().execute().await?;
+        for key in list.keys {
+            if key.name.starts_with("keys:") {
+                continue;
+            }
+            keys.push(key.name);
+        }
+        if list.list_complete {
+            break;
+        }
+    }
+
+    keys.sort();
+    kv.put("keys:all", serde_json::to_string(&keys)?)?
+        .execute()
+        .await?;
+
+    Ok(())
+}
+
+#[derive(Error, Debug)]
+pub enum GetKeysError {
+    #[error(transparent)]
+    KvError(#[from] KvError),
+    #[error(transparent)]
+    SerdeError(#[from] serde_json::Error),
+    #[error(transparent)]
+    PutKeysError(#[from] PutKeysError),
+}
+
+pub async fn get_keys(kv: &KvStore) -> Result<Vec<String>, GetKeysError> {
+    loop {
+        match kv.get("keys:all").text().await? {
+            Some(keys_json) => {
+                let keys: Vec<String> = serde_json::from_str(&keys_json)?;
+                return Ok(keys);
+            }
+            None => {
+                // Cache miss - generate cache using put_keys
+                put_keys(kv).await?;
+            }
+        }
     }
 }

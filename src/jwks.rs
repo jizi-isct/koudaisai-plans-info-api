@@ -1,7 +1,7 @@
-use jwt_simple::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use worker::{Error, Fetch, Headers, Method, Request, RequestInit};
+use thiserror::Error;
+use worker::{Fetch, Headers, Method, Request, RequestInit};
 
 /// JWKS (JSON Web Key Set) structure
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -34,39 +34,24 @@ pub struct JwtHeader {
 }
 
 /// Error types for JWKS operations
-#[derive(Debug)]
+#[derive(Error, Debug)]
 pub enum JwksError {
+    #[error("Network error: {0}")]
     NetworkError(String),
+    #[error("Parse error: {0}")]
     ParseError(String),
+    #[error("Key not found")]
     KeyNotFound,
+    #[error("Invalid token")]
     InvalidToken,
+    #[error("Verification error: {0}")]
     VerificationError(String),
-}
-
-impl std::fmt::Display for JwksError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            JwksError::NetworkError(msg) => write!(f, "Network error: {}", msg),
-            JwksError::ParseError(msg) => write!(f, "Parse error: {}", msg),
-            JwksError::KeyNotFound => write!(f, "Key not found in JWKS"),
-            JwksError::InvalidToken => write!(f, "Invalid JWT token format"),
-            JwksError::VerificationError(msg) => write!(f, "Verification error: {}", msg),
-        }
-    }
-}
-
-impl std::error::Error for JwksError {}
-
-impl Into<Error> for JwksError {
-    fn into(self) -> Error {
-        Error::Internal(format!("{}", self).into())
-    }
 }
 
 /// Fetch JWKS from a remote URL (without caching)
 async fn fetch_jwks_remote(jwks_url: &str) -> Result<Jwks, JwksError> {
     let request = {
-        let mut headers = Headers::new();
+        let headers = Headers::new();
         headers
             .set("Accept", "application/json")
             .map_err(|e| JwksError::NetworkError(format!("Failed to set headers: {:?}", e)))?;

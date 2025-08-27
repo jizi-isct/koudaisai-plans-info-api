@@ -34,31 +34,6 @@ pub async fn kv_bulk_get_values<T: DeserializeOwned>(
     Ok(map)
 }
 
-#[derive(serde::Deserialize)]
-struct WithMeta<V, M> {
-    value: Option<V>,
-    metadata: Option<M>,
-}
-
-pub async fn kv_bulk_get_with_meta<V: DeserializeOwned, M: DeserializeOwned>(
-    kv: &KvStore,
-    keys: &[String],
-) -> worker::Result<HashMap<String, WithMeta<V, M>>> {
-    let js_kv: &JsValue = unsafe { std::mem::transmute(kv) }; // KvStoreをJsValueとして扱う
-    let arr = Array::new();
-    for k in keys {
-        arr.push(&JsValue::from_str(k));
-    }
-
-    let p = kv_bulk_get_js(js_kv, arr, "json", true);
-    let js_val = JsFuture::from(p)
-        .await
-        .map_err(|e| Error::RustError(format!("{e:?}")))?;
-    let map: HashMap<String, WithMeta<V, M>> = serde_wasm_bindgen::from_value(js_val)
-        .map_err(|e| Error::RustError(format!("serde_wasm_bindgen: {e}")))?;
-    Ok(map)
-}
-
 /// a に b をマージする（a が更新される）
 pub fn deep_merge(a: &mut Value, b: Value) {
     match (a, b) {

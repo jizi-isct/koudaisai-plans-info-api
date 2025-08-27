@@ -8,7 +8,8 @@ mod util;
 use crate::icon::{put_icon, PutIconError};
 use crate::jwt_verifier::JwtVerifier;
 use crate::models::{
-    PlanCreate, PlanCreateError, PlanRead, PlanReadError, PlanTypeRead, PlanUpdate, PlanUpdateError,
+    put_keys, PlanCreate, PlanCreateError, PlanRead, PlanReadError, PlanTypeRead, PlanUpdate,
+    PlanUpdateError,
 };
 use crate::service::discord::Discord;
 use wasm_bindgen::JsValue;
@@ -17,7 +18,6 @@ use worker::*;
 const VAR_JWKS_URL: &str = "JWKS_URL";
 const KV_PLANS: &str = "PLANS";
 const R2_PLAN_IMAGES: &str = "plan_icons";
-const IMG_SIZES: &[u32] = &[128, 256, 512];
 
 #[event(fetch)]
 async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
@@ -28,7 +28,7 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
 
     router
         // GET /plans - 全ての企画情報を取得
-        .get_async("/v1/plans", |mut req, ctx| async move {
+        .get_async("/v1/plans", |req, ctx| async move {
             let url = req.url()?;
             let query_params = url.query_pairs();
 
@@ -75,6 +75,14 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                     }))?
                     .with_status(500));
                 }
+                Err(PlanReadError::GetKeysError(e)) => {
+                    console_error!("error occurred while retrieving keys: {:?}", e);
+                    return Ok(Response::from_json(&serde_json::json!({
+                        "code": 500,
+                        "message": "Internal error occurred."
+                    }))?
+                        .with_status(500));
+                }
             };
 
             // フィルター
@@ -111,7 +119,7 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
             }))
         })
         // GET /plans/{planId} - 特定の企画情報を取得
-        .get_async("/v1/plans/:plan_id", |req, ctx| async move {
+        .get_async("/v1/plans/:plan_id", |_req, ctx| async move {
             let plan_id = ctx.param("plan_id").map_or("", |v| v);
 
             let kv = ctx.env.kv(KV_PLANS)?;
@@ -161,6 +169,12 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                                 Err(err) => {
                                     console_error!("Discord webhook error: {}", err)
                                 }
+                            }
+
+                            // Update keys cache
+                            let kv_cache = ctx.env.kv(KV_PLANS)?;
+                            if let Err(err) = put_keys(&kv_cache).await {
+                                console_error!("Failed to update keys cache: {:?}", err);
                             }
 
                             // 企画作成成功時は204 No Contentを返す
@@ -279,6 +293,12 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                                 }
                             }
 
+                            // Update keys cache
+                            let kv_cache = ctx.env.kv(KV_PLANS)?;
+                            if let Err(err) = put_keys(&kv_cache).await {
+                                console_error!("Failed to update keys cache: {:?}", err);
+                            }
+
                             Ok(Response::empty()?.with_status(204))
                         },
                         Err(_) => Ok(Response::from_json(&serde_json::json!({
@@ -353,6 +373,12 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                             }
                         }
 
+                        // Update keys cache
+                        let kv_cache = ctx.env.kv(KV_PLANS)?;
+                        if let Err(err) = put_keys(&kv_cache).await {
+                            console_error!("Failed to update keys cache: {:?}", err);
+                        }
+
                         // 全て成功した場合は201 Createdで空のレスポンスを返す
                         Ok(Response::empty()?.with_status(201))
                     } else {
@@ -392,16 +418,9 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                     "message": format!("Internal error occurred: {}", e.to_string())
                 }))?
                 .with_status(500)),
-                Err(PutIconError::TransformError(e)) => {
-                    Ok(Response::from_json(&serde_json::json!({
-                        "code": 502,
-                        "message": e
-                    }))?
-                    .with_status(502))
-                }
             }
         })
-        .get_async("/v1/plans/:plan_id/icon", |req, ctx| async move {
+        .get_async("/v1/plans/:plan_id/icon", |_req, ctx| async move {
             let plan_id = ctx.param("plan_id").unwrap();
             let bucket = ctx.env.bucket(R2_PLAN_IMAGES)?;
 
@@ -494,6 +513,7 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                 };
 
                 if download_resp.status_code() < 200 || download_resp.status_code() >= 300 {
+                    console_error!("Failed to download image from URL: {:?}", download_resp);
                     return Ok(Response::from_json(&serde_json::json!({
                         "code": 502,
                         "message": "Failed to download image: HTTP error"
@@ -535,13 +555,6 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                             "message": format!("Internal error occurred: {}", e.to_string())
                         }))?
                         .with_status(500))
-                    }
-                    Err(PutIconError::TransformError(e)) => {
-                        Ok(Response::from_json(&serde_json::json!({
-                            "code": 502,
-                            "message": e
-                        }))?
-                        .with_status(502))
                     }
                 }
             },

@@ -33,10 +33,7 @@ impl Discord {
             .secret("DISCORD_WEBHOOK_URL")
             .expect("DISCORD_WEBHOOK_URL is not set")
             .to_string();
-        Self {
-            webhook_url,
-            base_url: "https://api2025.jizi.jp".into(),
-        }
+        Self::new(webhook_url)
     }
 
     fn create_embed_field(name: &str, value: String, inline: bool) -> Value {
@@ -53,7 +50,7 @@ impl Discord {
             init.with_method(Method::Post);
             init.with_body(Some(payload.to_string().into()));
 
-            let mut headers = worker::Headers::new();
+            let headers = worker::Headers::new();
             headers.set("Content-Type", "application/json")?;
             init.with_headers(headers);
 
@@ -478,7 +475,7 @@ impl Discord {
             init.with_method(Method::Post);
             init.with_body(Some(body.clone().into()));
 
-            let mut headers = worker::Headers::new();
+            let headers = worker::Headers::new();
             headers.set(
                 "Content-Type",
                 &format!("multipart/form-data; boundary={}", boundary),

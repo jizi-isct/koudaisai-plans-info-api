@@ -1,6 +1,7 @@
 use crate::jwks::{fetch_jwks, find_jwk_by_kid, parse_jwt_header, Jwks, JwksError};
 use jwt_simple::algorithms::{RS256PublicKey, RS384PublicKey, RS512PublicKey, RSAPublicKeyLike};
 use jwt_simple::claims::NoCustomClaims;
+use thiserror::Error;
 use worker::{console_debug, Headers};
 
 #[derive(Clone)]
@@ -103,21 +104,14 @@ impl JwtVerifier {
     }
 }
 
+#[derive(Debug, Error)]
 pub enum VerifyTokenInHeadersError {
+    #[error("Missing Authorization header")]
     MissingAuthorizationHeader,
+    #[error("Invalid Authorization header")]
     InvalidAuthorizationHeader,
-    JwksError(JwksError),
-    WorkersError(worker::Error),
-}
-
-impl From<JwksError> for VerifyTokenInHeadersError {
-    fn from(value: JwksError) -> Self {
-        Self::JwksError(value)
-    }
-}
-
-impl From<worker::Error> for VerifyTokenInHeadersError {
-    fn from(value: worker::Error) -> Self {
-        Self::WorkersError(value)
-    }
+    #[error("JWT verification failed: {0}")]
+    JwksError(#[from] JwksError),
+    #[error(transparent)]
+    WorkersError(#[from] worker::Error),
 }
