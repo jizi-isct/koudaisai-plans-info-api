@@ -57,6 +57,7 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                         "code": 404,
                         "message": "Plan not found."
                     }))?
+                        .with_cors(&Cors::new().with_origins(vec!["*"]))?
                     .with_status(404));
                 }
                 Err(PlanReadError::KvError(e)) => {
@@ -65,6 +66,7 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                         "code": 500,
                         "message": "Internal error occurred."
                     }))?
+                        .with_cors(&Cors::new().with_origins(vec!["*"]))?
                     .with_status(500));
                 }
                 Err(PlanReadError::WorkerError(e)) => {
@@ -73,6 +75,7 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                         "code": 500,
                         "message": "Internal error occurred."
                     }))?
+                        .with_cors(&Cors::new().with_origins(vec!["*"]))?
                     .with_status(500));
                 }
                 Err(PlanReadError::GetKeysError(e)) => {
@@ -81,6 +84,7 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                         "code": 500,
                         "message": "Internal error occurred."
                     }))?
+                        .with_cors(&Cors::new().with_origins(vec!["*"]))?
                         .with_status(500));
                 }
             };
@@ -114,9 +118,12 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                 }
             });
 
-            Response::from_json(&serde_json::json!({
-                "plans": plans
-            }))
+            Ok(
+                Response::from_json(&serde_json::json!({
+                    "plans": plans
+                }))?
+                    .with_cors(&Cors::new().with_origins(vec!["*"]))?
+            )
         })
         // GET /plans/{planId} - 特定の企画情報を取得
         .get_async("/v1/plans/:plan_id", |_req, ctx| async move {
@@ -130,11 +137,13 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                     "code": 404,
                     "message": "Plan not found."
                 }))?
+                    .with_cors(&Cors::new().with_origins(vec!["*"]))?
                 .with_status(404)),
                 Err(_) => Ok(Response::from_json(&serde_json::json!({
                     "code": 500,
                     "message": "Internal error occurred."
                 }))?
+                    .with_cors(&Cors::new().with_origins(vec!["*"]))?
                 .with_status(500)),
             }
         })
@@ -447,6 +456,7 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
             };
             Ok(Response::from_bytes(body.bytes().await?)?
                 .with_headers(headers)
+                .with_cors(&Cors::new().with_origins(vec!["*"]))?
                 .with_status(200))
         })
         .post_async(
