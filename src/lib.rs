@@ -110,7 +110,7 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                             || child_friendly == None)
                 }
                 PlanTypeRead::Labo { is_lab_tour } => {
-                    (plan_type == Some("stage".into()) || plan_type == None)
+                    (plan_type == Some("labo".into()) || plan_type == None)
                         && (recommended == Some(plan.is_recommended) || recommended == None)
                         && (child_friendly == Some(plan.is_child_friendly)
                             || child_friendly == None)
