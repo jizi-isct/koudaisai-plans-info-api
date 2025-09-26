@@ -558,6 +558,26 @@ components:
             oneOf:
               - $ref: '#/components/schemas/IndoorLocation'
               - $ref: '#/components/schemas/OutdoorLocation'
+        coordinates:
+          type: object
+          nullable: true
+          description: 企画の緯度経度座標
+          properties:
+            latitude:
+              type: number
+              format: float
+              description: 緯度
+              minimum: -90
+              maximum: 90
+            longitude:
+              type: number
+              format: float
+              description: 経度
+              minimum: -180
+              maximum: 180
+          required:
+            - latitude
+            - longitude
 
     BasePlanCreate:
       type: object
@@ -634,6 +654,26 @@ components:
             oneOf:
               - $ref: '#/components/schemas/IndoorLocation'
               - $ref: '#/components/schemas/OutdoorLocation'
+        coordinates:
+          type: object
+          nullable: true
+          description: 企画の緯度経度座標
+          properties:
+            latitude:
+              type: number
+              format: float
+              description: 緯度
+              minimum: -90
+              maximum: 90
+            longitude:
+              type: number
+              format: float
+              description: 経度
+              minimum: -180
+              maximum: 180
+          required:
+            - latitude
+            - longitude
 
     BasePlanUpdate:
       type: object
@@ -698,6 +738,26 @@ components:
             oneOf:
               - $ref: '#/components/schemas/IndoorLocation'
               - $ref: '#/components/schemas/OutdoorLocation'
+        coordinates:
+          type: object
+          nullable: true
+          description: 企画の緯度経度座標
+          properties:
+            latitude:
+              type: number
+              format: float
+              description: 緯度
+              minimum: -90
+              maximum: 90
+            longitude:
+              type: number
+              format: float
+              description: 経度
+              minimum: -180
+              maximum: 180
+          required:
+            - latitude
+            - longitude
 
     PlanDetails:
       type: object
