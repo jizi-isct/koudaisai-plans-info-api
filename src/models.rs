@@ -5,6 +5,12 @@ use thiserror::Error;
 use worker::kv::{KvError, KvStore};
 
 #[derive(Serialize, Deserialize, Clone)]
+pub struct Coordinates {
+    pub latitude: f64,
+    pub longitude: f64,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
 #[serde(tag = "type")]
 pub enum Location {
     #[serde(rename = "indoor")]
@@ -133,6 +139,8 @@ pub struct PlanCreate {
     pub is_recommended: bool,
     pub schedule: ScheduleCreate,
     pub location: Vec<Location>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub coordinates: Option<Coordinates>,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -147,6 +155,8 @@ pub struct PlanRead {
     pub is_recommended: bool,
     pub schedule: ScheduleRead,
     pub location: Vec<Location>,
+    #[serde(default)]
+    pub coordinates: Option<Coordinates>,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -167,6 +177,8 @@ pub struct PlanUpdate {
     pub schedule: Option<ScheduleUpdate>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub location: Option<Vec<Location>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub coordinates: Option<Option<Coordinates>>,
 }
 
 #[derive(Error, Debug)]
@@ -197,6 +209,7 @@ impl PlanCreate {
                 is_recommended: self.is_recommended,
                 schedule: self.schedule.into(),
                 location: self.location,
+                coordinates: self.coordinates,
             })
             .unwrap(),
         )?
