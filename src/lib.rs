@@ -33,14 +33,14 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
             let query_params = url.query_pairs();
 
             // クエリパラメータの解析
-            let mut plan_types: Option<Vec<&str>> = None;
+            let mut plan_types: Option<Vec<String>> = None;
             let mut recommended: Option<bool> = None;
             let mut child_friendly: Option<bool> = None;
             let mut lab_tour: Option<bool> = None;
 
             for (key, value) in query_params {
                 match key.as_ref() {
-                    "type" => plan_types = Some(value.into_owned().split(",").collect()),
+                    "type" => plan_types = Some(value.split(",").map(|s| s.into()).collect()),
                     "recommended" => recommended = value.parse().ok(),
                     "child_friendly" => child_friendly = value.parse().ok(),
                     "lab_tour" => lab_tour = value.parse().ok(),
@@ -58,7 +58,7 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                         "message": "Plan not found."
                     }))?
                         .with_cors(&Cors::new().with_origins(vec!["*"]))?
-                    .with_status(404));
+                        .with_status(404));
                 }
                 Err(PlanReadError::KvError(e)) => {
                     console_error!("kverror: {:?}", e);
@@ -67,7 +67,7 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                         "message": "Internal error occurred."
                     }))?
                         .with_cors(&Cors::new().with_origins(vec!["*"]))?
-                    .with_status(500));
+                        .with_status(500));
                 }
                 Err(PlanReadError::WorkerError(e)) => {
                     console_error!("workererror: {:?}", e);
@@ -76,7 +76,7 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                         "message": "Internal error occurred."
                     }))?
                         .with_cors(&Cors::new().with_origins(vec!["*"]))?
-                    .with_status(500));
+                        .with_status(500));
                 }
                 Err(PlanReadError::GetKeysError(e)) => {
                     console_error!("error occurred while retrieving keys: {:?}", e);
@@ -90,32 +90,20 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
             };
 
             // フィルター
-            plans.retain(|plan| match plan.r#type {
-                PlanTypeRead::Booth {} => {
-                    (plan_types.map_or(false, |t| t.contains(&"booth")))
-                        && (recommended == Some(plan.is_recommended) || recommended == None)
-                        && (child_friendly == Some(plan.is_child_friendly)
-                            || child_friendly == None)
-                }
-                PlanTypeRead::General {} => {
-                    (plan_types.map_or(false, |t| t.contains(&"general")))
-                        && (recommended == Some(plan.is_recommended) || recommended == None)
-                        && (child_friendly == Some(plan.is_child_friendly)
-                            || child_friendly == None)
-                }
-                PlanTypeRead::Stage {} => {
-                    (plan_types.map_or(false, |t| t.contains(&"stage")))
-                        && (recommended == Some(plan.is_recommended) || recommended == None)
-                        && (child_friendly == Some(plan.is_child_friendly)
-                            || child_friendly == None)
-                }
-                PlanTypeRead::Labo { is_lab_tour } => {
-                    (plan_types.map_or(false, |t| t.contains(&"labo")))
-                        && (recommended == Some(plan.is_recommended) || recommended == None)
-                        && (child_friendly == Some(plan.is_child_friendly)
-                            || child_friendly == None)
-                        && (lab_tour == Some(is_lab_tour) || lab_tour == None)
-                }
+            plans.retain(|plan| {
+                let mut flag = (recommended == Some(plan.is_recommended) || recommended == None)
+                    && (child_friendly == Some(plan.is_child_friendly)
+                    || child_friendly == None);
+
+                if plan_types.is_none() { return flag; }
+                let plan_types = plan_types.as_ref().unwrap();
+                flag = flag && match plan.r#type {
+                    PlanTypeRead::Booth {} => plan_types.contains(&"booth".into()),
+                    PlanTypeRead::General {} => plan_types.contains(&"general".into()),
+                    PlanTypeRead::Stage {} => plan_types.contains(&"stage".into()),
+                    PlanTypeRead::Labo { is_lab_tour } => plan_types.contains(&"labo".into()) && (lab_tour == Some(is_lab_tour) || lab_tour == None),
+                };
+                flag
             });
 
             Ok(
@@ -138,13 +126,13 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                     "message": "Plan not found."
                 }))?
                     .with_cors(&Cors::new().with_origins(vec!["*"]))?
-                .with_status(404)),
+                    .with_status(404)),
                 Err(_) => Ok(Response::from_json(&serde_json::json!({
                     "code": 500,
                     "message": "Internal error occurred."
                 }))?
                     .with_cors(&Cors::new().with_origins(vec!["*"]))?
-                .with_status(500)),
+                    .with_status(500)),
             }
         })
         // PUT /plans/{planId} - 新しい企画を作成
@@ -194,14 +182,14 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                                 "code": 409,
                                 "message": "指定されたIDの企画が既に存在します"
                             }))?
-                            .with_status(409))
+                                .with_status(409))
                         }
                         Err(PlanCreateError::KvError(_)) => {
                             Ok(Response::from_json(&serde_json::json!({
                                 "code": 500,
                                 "message": "内部エラーが発生しました"
                             }))?
-                            .with_status(500))
+                                .with_status(500))
                         }
                     }
                 }
@@ -209,7 +197,7 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                     "code": 400,
                     "message": e.to_string()
                 }))?
-                .with_status(400)),
+                    .with_status(400)),
             }
         })
         // PATCH /plans/{planId} - 企画情報を更新
@@ -239,7 +227,7 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                                 plan_id.into(),
                                 &plan_update,
                             ).await {
-                                Ok(_) => {},
+                                Ok(_) => {}
                                 Err(err) => {
                                     console_error!("Discord webhook error: {}", err)
                                 }
@@ -252,20 +240,20 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                                 "code": 404,
                                 "message": "企画が見つかりません"
                             }))?
-                            .with_status(404))
+                                .with_status(404))
                         }
                         Err(_) => Ok(Response::from_json(&serde_json::json!({
                             "code": 500,
                             "message": "内部エラーが発生しました"
                         }))?
-                        .with_status(500)),
+                            .with_status(500)),
                     }
                 }
                 Err(_) => Ok(Response::from_json(&serde_json::json!({
                     "code": 400,
                     "message": "リクエストが無効です"
                 }))?
-                .with_status(400)),
+                    .with_status(400)),
             }
         })
         // DELETE /plans/{planId} - 企画を削除
@@ -296,7 +284,7 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                             match discord.send_delete_plan(
                                 plan_id.into(),
                             ).await {
-                                Ok(_) => {},
+                                Ok(_) => {}
                                 Err(err) => {
                                     console_error!("Discord webhook error: {}", err)
                                 }
@@ -309,24 +297,24 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                             }
 
                             Ok(Response::empty()?.with_status(204))
-                        },
+                        }
                         Err(_) => Ok(Response::from_json(&serde_json::json!({
                             "code": 500,
                             "message": "内部エラーが発生しました"
                         }))?
-                        .with_status(500)),
+                            .with_status(500)),
                     }
                 }
                 Err(PlanReadError::NotFound) => Ok(Response::from_json(&serde_json::json!({
                     "code": 404,
                     "message": "企画が見つかりません"
                 }))?
-                .with_status(404)),
+                    .with_status(404)),
                 Err(_) => Ok(Response::from_json(&serde_json::json!({
                     "code": 500,
                     "message": "内部エラーが発生しました"
                 }))?
-                .with_status(500)),
+                    .with_status(500)),
             }
         })
         // POST /plans:bulk - 企画の一括作成
@@ -376,7 +364,7 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                         // discord
                         let discord = Discord::new_from_env(&ctx.env);
                         match discord.send_bulk_create_plan().await {
-                            Ok(_) => {},
+                            Ok(_) => {}
                             Err(err) => {
                                 console_error!("Discord webhook error: {}", err)
                             }
@@ -426,7 +414,7 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                     "code": 500,
                     "message": format!("Internal error occurred: {}", e.to_string())
                 }))?
-                .with_status(500)),
+                    .with_status(500)),
             }
         })
         .get_async("/v1/plans/:plan_id/icon", |_req, ctx| async move {
@@ -443,7 +431,7 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                     "code": 404,
                     "message": "Icon not found."
                 }))?
-                .with_status(404));
+                    .with_status(404));
             }
 
             // レスポンス
@@ -484,7 +472,7 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                             "code": 400,
                             "message": "Invalid JSON body"
                         }))?
-                        .with_status(400));
+                            .with_status(400));
                     }
                 };
 
@@ -495,7 +483,7 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                             "code": 400,
                             "message": "Missing 'url' field in request body"
                         }))?
-                        .with_status(400));
+                            .with_status(400));
                     }
                 };
 
@@ -507,7 +495,7 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                             "code": 400,
                             "message": "Invalid URL"
                         }))?
-                        .with_status(400));
+                            .with_status(400));
                     }
                 };
 
@@ -518,7 +506,7 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                             "code": 502,
                             "message": "Failed to download image from URL"
                         }))?
-                        .with_status(502));
+                            .with_status(502));
                     }
                 };
 
@@ -528,7 +516,7 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                         "code": 502,
                         "message": "Failed to download image: HTTP error"
                     }))?
-                    .with_status(502));
+                        .with_status(502));
                 }
 
                 // Content-Typeをチェック
@@ -541,7 +529,7 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                         "code": 400,
                         "message": "Downloaded content is not an image"
                     }))?
-                    .with_status(400));
+                        .with_status(400));
                 }
 
                 let bytes = match download_resp.bytes().await {
@@ -551,7 +539,7 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                             "code": 502,
                             "message": "Failed to read image data"
                         }))?
-                        .with_status(502));
+                            .with_status(502));
                     }
                 };
 
@@ -564,7 +552,7 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                             "code": 500,
                             "message": format!("Internal error occurred: {}", e.to_string())
                         }))?
-                        .with_status(500))
+                            .with_status(500))
                     }
                 }
             },
