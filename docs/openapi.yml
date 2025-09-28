@@ -781,10 +781,6 @@ components:
               description:
                 type: string
                 description: 商品説明
-              availability:
-                type: string
-                enum: [ available, limited, sold_out ]
-                description: 販売状況
         additional_info:
           type: string
           description: 追加情報（マークダウン形式）
