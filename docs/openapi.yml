@@ -19,10 +19,14 @@ paths:
       parameters:
         - name: type
           in: query
-          description: 企画タイプでフィルタリング
+          description: 企画タイプでフィルタリング（カンマ区切りで複数指定可）
           schema:
-            type: string
-            enum: [booth, general, stage, labo]
+            type: array
+            items:
+              type: string
+              enum: [ booth, general, stage, labo ]
+          style: form
+          explode: false
         - name: recommended
           in: query
           description: おすすめ企画でフィルタリング
@@ -119,7 +123,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
       security:
-        - Bearer: []
+        - Bearer: [ ]
     patch:
       summary: 企画情報を更新
       description: 指定されたIDの企画情報を更新します。企画が存在しない場合は404エラーを返します。
@@ -156,7 +160,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
       security:
-        - Bearer: []
+        - Bearer: [ ]
     delete:
       summary: 企画を削除
       description: 指定されたIDの企画を削除します。
@@ -177,7 +181,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
       security:
-        - Bearer: []
+        - Bearer: [ ]
 
   /plans:bulk:
     post:
@@ -399,7 +403,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
       security:
-        - Bearer: []
+        - Bearer: [ ]
   /plans/{planId}/icon:import:
     post:
       summary: URLからアイコンをインポート
@@ -456,7 +460,7 @@ components:
       properties:
         type:
           type: string
-          enum: [indoor]
+          enum: [ indoor ]
           description: 企画実施場所が屋内であることを示す
         building:
           type: string
@@ -473,7 +477,7 @@ components:
       properties:
         type:
           type: string
-          enum: [outdoor]
+          enum: [ outdoor ]
           description: 企画実施場所が屋外であることを示す
         name:
           type: string
@@ -779,7 +783,7 @@ components:
                 description: 商品説明
               availability:
                 type: string
-                enum: [available, limited, sold_out]
+                enum: [ available, limited, sold_out ]
                 description: 販売状況
         additional_info:
           type: string
@@ -798,7 +802,7 @@ components:
               description: 模擬店企画ID（M-000形式）
             type:
               type: string
-              enum: [booth]
+              enum: [ booth ]
 
     BoothPlanCreate:
       allOf:
@@ -809,7 +813,7 @@ components:
           properties:
             type:
               type: string
-              enum: [booth]
+              enum: [ booth ]
 
     BoothPlanUpdate:
       allOf:
@@ -829,7 +833,7 @@ components:
               description: 一般企画ID（I-000形式）
             type:
               type: string
-              enum: [general]
+              enum: [ general ]
       example:
         id: "I-001"
         type: "general"
@@ -856,7 +860,7 @@ components:
           properties:
             type:
               type: string
-              enum: [general]
+              enum: [ general ]
 
     GeneralPlanUpdate:
       allOf:
@@ -876,7 +880,7 @@ components:
               description: ステージ企画ID（S-000形式）
             type:
               type: string
-              enum: [stage]
+              enum: [ stage ]
       example:
         id: "S-001"
         type: "stage"
@@ -902,7 +906,7 @@ components:
           properties:
             type:
               type: string
-              enum: [stage]
+              enum: [ stage ]
 
     StagePlanUpdate:
       allOf:
@@ -923,7 +927,7 @@ components:
               description: 研究室企画ID（L-000形式）
             type:
               type: string
-              enum: [labo]
+              enum: [ labo ]
             is_lab_tour:
               type: boolean
               description: 研究室ツアー参加企画か否か
@@ -955,7 +959,7 @@ components:
           properties:
             type:
               type: string
-              enum: [labo]
+              enum: [ labo ]
             is_lab_tour:
               type: boolean
               description: 研究室ツアー参加企画か否か

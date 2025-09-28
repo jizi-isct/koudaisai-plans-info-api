@@ -33,14 +33,14 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
             let query_params = url.query_pairs();
 
             // クエリパラメータの解析
-            let mut plan_type: Option<String> = None;
+            let mut plan_types: Option<Vec<&str>> = None;
             let mut recommended: Option<bool> = None;
             let mut child_friendly: Option<bool> = None;
             let mut lab_tour: Option<bool> = None;
 
             for (key, value) in query_params {
                 match key.as_ref() {
-                    "type" => plan_type = Some(value.into_owned()),
+                    "type" => plan_types = Some(value.into_owned().split(",").collect()),
                     "recommended" => recommended = value.parse().ok(),
                     "child_friendly" => child_friendly = value.parse().ok(),
                     "lab_tour" => lab_tour = value.parse().ok(),
@@ -92,25 +92,25 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
             // フィルター
             plans.retain(|plan| match plan.r#type {
                 PlanTypeRead::Booth {} => {
-                    (plan_type == Some("booth".into()) || plan_type == None)
+                    (plan_types.map_or(false, |t| t.contains(&"booth")))
                         && (recommended == Some(plan.is_recommended) || recommended == None)
                         && (child_friendly == Some(plan.is_child_friendly)
                             || child_friendly == None)
                 }
                 PlanTypeRead::General {} => {
-                    (plan_type == Some("general".into()) || plan_type == None)
+                    (plan_types.map_or(false, |t| t.contains(&"general")))
                         && (recommended == Some(plan.is_recommended) || recommended == None)
                         && (child_friendly == Some(plan.is_child_friendly)
                             || child_friendly == None)
                 }
                 PlanTypeRead::Stage {} => {
-                    (plan_type == Some("stage".into()) || plan_type == None)
+                    (plan_types.map_or(false, |t| t.contains(&"stage")))
                         && (recommended == Some(plan.is_recommended) || recommended == None)
                         && (child_friendly == Some(plan.is_child_friendly)
                             || child_friendly == None)
                 }
                 PlanTypeRead::Labo { is_lab_tour } => {
-                    (plan_type == Some("labo".into()) || plan_type == None)
+                    (plan_types.map_or(false, |t| t.contains(&"labo")))
                         && (recommended == Some(plan.is_recommended) || recommended == None)
                         && (child_friendly == Some(plan.is_child_friendly)
                             || child_friendly == None)
