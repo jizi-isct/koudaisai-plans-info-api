@@ -95,13 +95,17 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                     && (child_friendly == Some(plan.is_child_friendly)
                     || child_friendly == None);
 
+                if let PlanTypeRead::Labo { is_lab_tour } = plan.r#type {
+                    flag = flag && (lab_tour == Some(is_lab_tour) || lab_tour == None);
+                }
+
                 if plan_types.is_none() { return flag; }
                 let plan_types = plan_types.as_ref().unwrap();
                 flag = flag && match plan.r#type {
                     PlanTypeRead::Booth {} => plan_types.contains(&"booth".into()),
                     PlanTypeRead::General {} => plan_types.contains(&"general".into()),
                     PlanTypeRead::Stage {} => plan_types.contains(&"stage".into()),
-                    PlanTypeRead::Labo { is_lab_tour } => plan_types.contains(&"labo".into()) && (lab_tour == Some(is_lab_tour) || lab_tour == None),
+                    PlanTypeRead::Labo { is_lab_tour } => plan_types.contains(&"labo".into())
                 };
                 flag
             });
