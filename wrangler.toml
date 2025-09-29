@@ -14,7 +14,7 @@ id = "431c204df59d48579d06bb59f4dfad6a"
 
 [[kv_namespaces]]
 binding = "PLAN_DETAILS"
-id = ""
+id = "6bde2db19a3049ac9317f61a337a344b"
 
 [[r2_buckets]]
 bucket_name = "plan-icons"
