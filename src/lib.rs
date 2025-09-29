@@ -8,8 +8,9 @@ mod util;
 use crate::icon::{put_icon, PutIconError};
 use crate::jwt_verifier::JwtVerifier;
 use crate::models::{
-    put_keys, PlanCreate, PlanCreateError, PlanRead, PlanReadError, PlanTypeRead, PlanUpdate,
-    PlanUpdateError,
+    put_keys, CreatePlanDetails, PlanCreate, PlanCreateError, PlanDetailsCreateError,
+    PlanDetailsReadError, PlanDetailsUpdateError, PlanRead, PlanReadError, PlanTypeRead,
+    PlanUpdate, PlanUpdateError, ReadPlanDetails, UpdatePlanDetails,
 };
 use crate::service::discord::Discord;
 use wasm_bindgen::JsValue;
@@ -17,6 +18,7 @@ use worker::*;
 
 const VAR_JWKS_URL: &str = "JWKS_URL";
 const KV_PLANS: &str = "PLANS";
+const KV_PLAN_DETAILS: &str = "PLAN_DETAILS";
 const R2_PLAN_IMAGES: &str = "plan_icons";
 
 #[event(fetch)]
@@ -561,6 +563,141 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                 }
             },
         )
+        // GET /plans/{planId}/details - 企画の詳細情報を取得
+        .get_async("/v1/plans/:plan_id/details", |_req, ctx| async move {
+            let plan_id = ctx.param("plan_id").map_or("", |v| v);
+
+            let kv = ctx.env.kv(KV_PLAN_DETAILS)?;
+
+            match ReadPlanDetails::read(kv, plan_id).await {
+                Ok(plan_details) => Response::from_json(&plan_details),
+                Err(PlanDetailsReadError::NotFound) => Ok(Response::from_json(&serde_json::json!({
+                    "code": 404,
+                    "message": "Plan details not found."
+                }))?
+                    .with_cors(&Cors::new().with_origins(vec!["*"]))?
+                    .with_status(404)),
+                Err(_) => Ok(Response::from_json(&serde_json::json!({
+                    "code": 500,
+                    "message": "Internal error occurred."
+                }))?
+                    .with_cors(&Cors::new().with_origins(vec!["*"]))?
+                    .with_status(500)),
+            }
+        })
+        // PUT /plans/{planId}/details - 企画の詳細情報を作成・更新
+        .put_async("/v1/plans/:plan_id/details", |mut req, ctx| async move {
+            let plan_id = ctx.param("plan_id").map_or("", |v| v);
+
+            // JWT認証チェック
+            let jwt_verifier = JwtVerifier::new(&*ctx.env.var(VAR_JWKS_URL)?.to_string())
+                .await
+                .unwrap();
+            if jwt_verifier
+                .verify_token_in_headers(&req.headers())
+                .is_err()
+            {
+                return Ok(Response::from_bytes("Unauthorized".into())?.with_status(401));
+            }
+
+            match req.json::<CreatePlanDetails>().await {
+                Ok(plan_details_create) => {
+                    let kv = ctx.env.kv(KV_PLAN_DETAILS)?;
+                    match plan_details_create.put(kv, plan_id).await {
+                        Ok(_) => {
+                            // 詳細情報作成・更新成功時は204 No Contentを返す
+                            Ok(Response::empty()?.with_status(204))
+                        }
+                        Err(PlanDetailsCreateError::KvError(_)) => {
+                            Ok(Response::from_json(&serde_json::json!({
+                                "code": 500,
+                                "message": "内部エラーが発生しました"
+                            }))?
+                                .with_status(500))
+                        }
+                        Err(PlanDetailsCreateError::SerdeError(_)) => {
+                            Ok(Response::from_json(&serde_json::json!({
+                                "code": 500,
+                                "message": "内部エラーが発生しました"
+                            }))?
+                                .with_status(500))
+                        }
+                        Err(PlanDetailsCreateError::Conflict) => {
+                            Ok(Response::from_json(&serde_json::json!({
+                                "code": 409,
+                                "message": "指定されたIDの企画詳細が既に存在します"
+                            }))?
+                                .with_status(409))
+                        }
+                    }
+                }
+                Err(e) => Ok(Response::from_json(&serde_json::json!({
+                    "code": 400,
+                    "message": e.to_string()
+                }))?
+                    .with_status(400)),
+            }
+        })
+        // PATCH /plans/{planId}/details - 企画の詳細情報を部分更新
+        .patch_async("/v1/plans/:plan_id/details", |mut req, ctx| async move {
+            let plan_id = ctx.param("plan_id").map_or("", |v| v);
+
+            // JWT認証チェック
+            let jwt_verifier = JwtVerifier::new(&*ctx.env.var(VAR_JWKS_URL)?.to_string())
+                .await
+                .unwrap();
+            if jwt_verifier
+                .verify_token_in_headers(&req.headers())
+                .is_err()
+            {
+                return Ok(Response::from_bytes("Unauthorized".into())?.with_status(401));
+            }
+
+            match req.json::<UpdatePlanDetails>().await {
+                Ok(plan_details_update) => {
+                    let kv = ctx.env.kv(KV_PLAN_DETAILS)?;
+                    match plan_details_update.update(kv, plan_id).await {
+                        Ok(_) => {
+                            // 詳細情報更新成功時は204 No Contentを返す
+                            Ok(Response::empty()?.with_status(204))
+                        }
+                        Err(PlanDetailsUpdateError::NotFound) => {
+                            Ok(Response::from_json(&serde_json::json!({
+                                "code": 404,
+                                "message": "企画詳細が見つかりません"
+                            }))?
+                                .with_status(404))
+                        }
+                        Err(PlanDetailsUpdateError::KvError(_)) => {
+                            Ok(Response::from_json(&serde_json::json!({
+                                "code": 500,
+                                "message": "内部エラーが発生しました"
+                            }))?
+                                .with_status(500))
+                        }
+                        Err(PlanDetailsUpdateError::WorkerError(_)) => {
+                            Ok(Response::from_json(&serde_json::json!({
+                                "code": 500,
+                                "message": "内部エラーが発生しました"
+                            }))?
+                                .with_status(500))
+                        }
+                        Err(PlanDetailsUpdateError::SerdeError(_)) => {
+                            Ok(Response::from_json(&serde_json::json!({
+                                "code": 500,
+                                "message": "内部エラーが発生しました"
+                            }))?
+                                .with_status(500))
+                        }
+                    }
+                }
+                Err(e) => Ok(Response::from_json(&serde_json::json!({
+                    "code": 400,
+                    "message": e.to_string()
+                }))?
+                    .with_status(400)),
+            }
+        })
         .run(req, env)
         .await
 }
