@@ -252,7 +252,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PlanDetails'
+                $ref: '#/components/schemas/ReadPlanDetails'
         '404':
           description: 企画が見つかりません
           content:
@@ -274,7 +274,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PlanDetails'
+              $ref: '#/components/schemas/CreatePlanDetails'
       responses:
         '204':
           description: 詳細情報が正常に作成・更新されました
@@ -307,7 +307,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PlanDetails'
+              $ref: '#/components/schemas/UpdatePlanDetails'
       responses:
         '204':
           description: 詳細情報が正常に更新されました
@@ -763,7 +763,65 @@ components:
             - latitude
             - longitude
 
-    PlanDetails:
+    CreatePlanDetails:
+      type: object
+      required:
+        - products
+      properties:
+        products:
+          type: array
+          description: 当日販売される商品の一覧
+          items:
+            type: object
+            required:
+              - name
+              - price
+              - description
+            properties:
+              name:
+                type: string
+                description: 商品名
+              price:
+                type: integer
+                description: 価格
+              description:
+                type: string
+                description: 商品説明
+        additional_info:
+          type: string
+          nullable: true
+          description: 追加情報（マークダウン形式）
+
+    ReadPlanDetails:
+      type: object
+      required:
+        - products
+      properties:
+        products:
+          type: array
+          description: 当日販売される商品の一覧
+          items:
+            type: object
+            required:
+              - name
+              - price
+              - description
+            properties:
+              name:
+                type: string
+                description: 商品名
+              price:
+                type: integer
+                description: 価格
+              description:
+                type: string
+                description: 商品説明
+        additional_info:
+          type: string
+          nullable: true
+          description: 追加情報（マークダウン形式）
+
+    UpdatePlanDetails:
       type: object
       properties:
         products:
@@ -783,6 +841,7 @@ components:
                 description: 商品説明
         additional_info:
           type: string
+          nullable: true
           description: 追加情報（マークダウン形式）
 
     BoothPlanRead:
