@@ -483,6 +483,39 @@ components:
           type: string
           description: 企画実施場所の名称
 
+    BoothPlanCategory:
+      type: string
+      format: enum
+      description: |-
+        模擬店企画のカテゴリ
+        - `main_rice` - ごはん系
+        - `main_noodle_flour` - 麺・粉もの系
+        - `main_skewer_grill` - 串・焼き物系
+        - `main_hot_snack` - ホットフード・軽食系
+        - `main_soup` - スープ系
+        - `main_world_street` - 世界の屋台フード
+        - `sweet_japanese` - 和スイーツ
+        - `sweet_western` - 洋スイーツ
+        - `sweet_cold` - 冷たいスイーツ
+        - `sweet_snack` - スナックスイーツ
+        - `sweet_drink` - 飲むスイーツ（デザートドリンク）
+        - `sweet_world` - 世界のスイーツ・甘味系屋台フード
+        - `drink` - ドリンク系
+      enum:
+        - main_rice
+        - main_noodle_flour
+        - main_skewer_grill
+        - main_hot_snack
+        - main_soup
+        - main_world_street
+        - sweet_japanese
+        - sweet_western
+        - sweet_cold
+        - sweet_snack
+        - sweet_drink
+        - sweet_world
+        - drink
+
     BasePlanRead:
       type: object
       required:
