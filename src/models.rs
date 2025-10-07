@@ -65,12 +65,41 @@ pub struct Product {
     pub description: String,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "snake_case")]
+pub enum BoothPlanCategory {
+    MainRice,
+    MainNoodleFlour,
+    MainSkewerGrill,
+    MainHotSnack,
+    MainSoup,
+    MainWorldStreet,
+    SweetJapanese,
+    SweetWestern,
+    SweetCold,
+    SweetSnack,
+    SweetDrink,
+    SweetWorld,
+    Drink,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "snake_case")]
+pub enum GeneralPlanCategory {
+    Play,
+    Display,
+    Performance,
+    Cafe,
+    Rest,
+    Presentation,
+}
+
 #[derive(Serialize, Deserialize, Clone)]
 #[serde(tag = "type")]
 #[serde(rename_all = "snake_case")]
 pub enum PlanTypeCreate {
-    Booth {},
-    General {},
+    Booth { category: BoothPlanCategory },
+    General { category: GeneralPlanCategory },
     Stage {},
     Labo { is_lab_tour: bool },
 }
@@ -78,8 +107,8 @@ pub enum PlanTypeCreate {
 impl Into<PlanTypeRead> for PlanTypeCreate {
     fn into(self) -> PlanTypeRead {
         match self {
-            PlanTypeCreate::Booth {} => PlanTypeRead::Booth {},
-            PlanTypeCreate::General {} => PlanTypeRead::General {},
+            PlanTypeCreate::Booth { category } => PlanTypeRead::Booth { category },
+            PlanTypeCreate::General { category } => PlanTypeRead::General { category },
             PlanTypeCreate::Stage {} => PlanTypeRead::Stage {},
             PlanTypeCreate::Labo { is_lab_tour } => PlanTypeRead::Labo { is_lab_tour },
         }
@@ -90,8 +119,8 @@ impl Into<PlanTypeRead> for PlanTypeCreate {
 #[serde(tag = "type")]
 #[serde(rename_all = "snake_case")]
 pub enum PlanTypeRead {
-    Booth {},
-    General {},
+    Booth { category: BoothPlanCategory },
+    General { category: GeneralPlanCategory },
     Stage {},
     Labo { is_lab_tour: bool },
 }
@@ -100,8 +129,14 @@ pub enum PlanTypeRead {
 #[serde(tag = "type")]
 #[serde(rename_all = "snake_case")]
 pub enum PlanTypeUpdate {
-    Booth {},
-    General {},
+    Booth {
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        category: Option<BoothPlanCategory>,
+    },
+    General {
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        category: Option<GeneralPlanCategory>,
+    },
     Stage {},
     Labo {
         #[serde(default, skip_serializing_if = "Option::is_none")]
