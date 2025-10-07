@@ -516,6 +516,25 @@ components:
         - sweet_world
         - drink
 
+    GeneralPlanCategory:
+      type: string
+      format: enum
+      description: |-
+        一般企画のカテゴリ
+        - `play` - 遊び・体験
+        - `display` - 展示
+        - `performance` - パフォーマンス
+        - `cafe` - カフェ
+        - `rest` - 一休み
+        - `presentation`
+      enum:
+        - play
+        - display
+        - performance
+        - cafe
+        - rest
+        - presentation
+
     BasePlanRead:
       type: object
       required:
