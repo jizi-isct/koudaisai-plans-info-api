@@ -902,6 +902,7 @@ components:
         - type: object
           required:
             - type
+            - category
           properties:
             id:
               type: string
@@ -910,6 +911,8 @@ components:
             type:
               type: string
               enum: [ booth ]
+            category:
+              $ref: '#/components/schemas/BoothPlanCategory'
 
     BoothPlanCreate:
       allOf:
@@ -917,15 +920,21 @@ components:
         - type: object
           required:
             - type
+            - category
           properties:
             type:
               type: string
               enum: [ booth ]
+            category:
+              $ref: '#/components/schemas/BoothPlanCategory'
 
     BoothPlanUpdate:
       allOf:
         - $ref: '#/components/schemas/BasePlanUpdate'
         - type: object
+          properties:
+            category:
+              $ref: '#/components/schemas/BoothPlanCategory'
 
     GeneralPlanRead:
       allOf:
@@ -933,6 +942,7 @@ components:
         - type: object
           required:
             - type
+            - category
           properties:
             id:
               type: string
@@ -941,9 +951,12 @@ components:
             type:
               type: string
               enum: [ general ]
+            category:
+              $ref: '#/components/schemas/GeneralPlanCategory'
       example:
         id: "I-001"
         type: "general"
+        category: "play"
         organization_name: "ゲーム制作サークル"
         plan_name: "オリジナルゲーム体験会"
         description: "サークルメンバーが制作したオリジナルゲームを体験できます。"
@@ -964,15 +977,21 @@ components:
         - type: object
           required:
             - type
+            - category
           properties:
             type:
               type: string
               enum: [ general ]
+            category:
+              $ref: '#/components/schemas/GeneralPlanCategory'
 
     GeneralPlanUpdate:
       allOf:
         - $ref: '#/components/schemas/BasePlanUpdate'
         - type: object
+          properties:
+            category:
+              $ref: '#/components/schemas/GeneralPlanCategory'
 
     StagePlanRead:
       allOf:
