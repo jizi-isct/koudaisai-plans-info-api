@@ -98,17 +98,23 @@ pub enum GeneralPlanCategory {
 #[serde(tag = "type")]
 #[serde(rename_all = "snake_case")]
 pub enum PlanTypeCreate {
-    Booth { category: BoothPlanCategory },
-    General { category: GeneralPlanCategory },
+    Booth {
+        categories: Vec<BoothPlanCategory>,
+    },
+    General {
+        categories: Vec<GeneralPlanCategory>,
+    },
     Stage {},
-    Labo { is_lab_tour: bool },
+    Labo {
+        is_lab_tour: bool,
+    },
 }
 
 impl Into<PlanTypeRead> for PlanTypeCreate {
     fn into(self) -> PlanTypeRead {
         match self {
-            PlanTypeCreate::Booth { category } => PlanTypeRead::Booth { category },
-            PlanTypeCreate::General { category } => PlanTypeRead::General { category },
+            PlanTypeCreate::Booth { categories } => PlanTypeRead::Booth { categories },
+            PlanTypeCreate::General { categories } => PlanTypeRead::General { categories },
             PlanTypeCreate::Stage {} => PlanTypeRead::Stage {},
             PlanTypeCreate::Labo { is_lab_tour } => PlanTypeRead::Labo { is_lab_tour },
         }
@@ -119,10 +125,16 @@ impl Into<PlanTypeRead> for PlanTypeCreate {
 #[serde(tag = "type")]
 #[serde(rename_all = "snake_case")]
 pub enum PlanTypeRead {
-    Booth { category: BoothPlanCategory },
-    General { category: GeneralPlanCategory },
+    Booth {
+        categories: Vec<BoothPlanCategory>,
+    },
+    General {
+        categories: Vec<GeneralPlanCategory>,
+    },
     Stage {},
-    Labo { is_lab_tour: bool },
+    Labo {
+        is_lab_tour: bool,
+    },
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -131,11 +143,11 @@ pub enum PlanTypeRead {
 pub enum PlanTypeUpdate {
     Booth {
         #[serde(default, skip_serializing_if = "Option::is_none")]
-        category: Option<BoothPlanCategory>,
+        categories: Option<Vec<BoothPlanCategory>>,
     },
     General {
         #[serde(default, skip_serializing_if = "Option::is_none")]
-        category: Option<GeneralPlanCategory>,
+        categories: Option<Vec<GeneralPlanCategory>>,
     },
     Stage {},
     Labo {
