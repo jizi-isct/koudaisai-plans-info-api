@@ -104,10 +104,10 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
                 if plan_types.is_none() { return flag; }
                 let plan_types = plan_types.as_ref().unwrap();
                 flag = flag && match plan.r#type {
-                    PlanTypeRead::Booth {} => plan_types.contains(&"booth".into()),
-                    PlanTypeRead::General {} => plan_types.contains(&"general".into()),
+                    PlanTypeRead::Booth { .. } => plan_types.contains(&"booth".into()),
+                    PlanTypeRead::General { .. } => plan_types.contains(&"general".into()),
                     PlanTypeRead::Stage {} => plan_types.contains(&"stage".into()),
-                    PlanTypeRead::Labo { is_lab_tour } => plan_types.contains(&"labo".into())
+                    PlanTypeRead::Labo { .. } => plan_types.contains(&"labo".into())
                 };
                 flag
             });

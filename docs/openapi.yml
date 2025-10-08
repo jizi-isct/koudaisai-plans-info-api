@@ -483,6 +483,58 @@ components:
           type: string
           description: 企画実施場所の名称
 
+    BoothPlanCategory:
+      type: string
+      format: enum
+      description: |-
+        模擬店企画のカテゴリ
+        - `main_rice` - ごはん系
+        - `main_noodle_flour` - 麺・粉もの系
+        - `main_skewer_grill` - 串・焼き物系
+        - `main_hot_snack` - ホットフード・軽食系
+        - `main_soup` - スープ系
+        - `main_world_street` - 世界の屋台フード
+        - `sweet_japanese` - 和スイーツ
+        - `sweet_western` - 洋スイーツ
+        - `sweet_cold` - 冷たいスイーツ
+        - `sweet_snack` - スナックスイーツ
+        - `sweet_drink` - 飲むスイーツ（デザートドリンク）
+        - `sweet_world` - 世界のスイーツ・甘味系屋台フード
+        - `drink` - ドリンク系
+      enum:
+        - main_rice
+        - main_noodle_flour
+        - main_skewer_grill
+        - main_hot_snack
+        - main_soup
+        - main_world_street
+        - sweet_japanese
+        - sweet_western
+        - sweet_cold
+        - sweet_snack
+        - sweet_drink
+        - sweet_world
+        - drink
+
+    GeneralPlanCategory:
+      type: string
+      format: enum
+      description: |-
+        一般企画のカテゴリ
+        - `play` - 遊び・体験
+        - `display` - 展示
+        - `performance` - パフォーマンス
+        - `cafe` - カフェ
+        - `rest` - 一休み
+        - `presentation`
+      enum:
+        - play
+        - display
+        - performance
+        - cafe
+        - rest
+        - presentation
+
     BasePlanRead:
       type: object
       required:
@@ -850,6 +902,7 @@ components:
         - type: object
           required:
             - type
+            - categories
           properties:
             id:
               type: string
@@ -858,6 +911,10 @@ components:
             type:
               type: string
               enum: [ booth ]
+            categories:
+              type: array
+              items:
+                $ref: '#/components/schemas/BoothPlanCategory'
 
     BoothPlanCreate:
       allOf:
@@ -865,15 +922,25 @@ components:
         - type: object
           required:
             - type
+            - categories
           properties:
             type:
               type: string
               enum: [ booth ]
+            categories:
+              type: array
+              items:
+                $ref: '#/components/schemas/BoothPlanCategory'
 
     BoothPlanUpdate:
       allOf:
         - $ref: '#/components/schemas/BasePlanUpdate'
         - type: object
+          properties:
+            categories:
+              type: array
+              items:
+                $ref: '#/components/schemas/BoothPlanCategory'
 
     GeneralPlanRead:
       allOf:
@@ -881,6 +948,7 @@ components:
         - type: object
           required:
             - type
+            - categories
           properties:
             id:
               type: string
@@ -889,9 +957,14 @@ components:
             type:
               type: string
               enum: [ general ]
+            categories:
+              type: array
+              items:
+                $ref: '#/components/schemas/GeneralPlanCategory'
       example:
         id: "I-001"
         type: "general"
+        categories: [ "play" ]
         organization_name: "ゲーム制作サークル"
         plan_name: "オリジナルゲーム体験会"
         description: "サークルメンバーが制作したオリジナルゲームを体験できます。"
@@ -912,15 +985,25 @@ components:
         - type: object
           required:
             - type
+            - categories
           properties:
             type:
               type: string
               enum: [ general ]
+            categories:
+              type: array
+              items:
+                $ref: '#/components/schemas/GeneralPlanCategory'
 
     GeneralPlanUpdate:
       allOf:
         - $ref: '#/components/schemas/BasePlanUpdate'
         - type: object
+          properties:
+            categories:
+              type: array
+              items:
+                $ref: '#/components/schemas/GeneralPlanCategory'
 
     StagePlanRead:
       allOf:
