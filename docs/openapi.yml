@@ -233,6 +233,53 @@ paths:
                 $ref: '#/components/schemas/Error'
       security:
         - Bearer: [ ]
+    patch:
+      summary: 企画の一括更新
+      description: 指定されたIDの企画を複数まとめて更新します。存在しない企画IDは無視されます。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: IDと企画更新データのマップ（キーがID、値が企画更新オブジェクト）
+              additionalProperties:
+                oneOf:
+                  - $ref: '#/components/schemas/BoothPlanUpdate'
+                  - $ref: '#/components/schemas/GeneralPlanUpdate'
+                  - $ref: '#/components/schemas/StagePlanUpdate'
+                  - $ref: '#/components/schemas/LaboPlanUpdate'
+      responses:
+        '204':
+          description: 企画が正常に一括更新されました
+        '207':
+          description: 一部の企画更新に失敗しました
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: array
+                    description: 失敗したエントリーのエラー情報
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/Error'
+                        - type: object
+                          properties:
+                            plan_id:
+                              type: string
+                              description: 失敗した企画のID
+                          required:
+                            - plan_id
+        '400':
+          description: リクエストが無効です
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - Bearer: [ ]
 
 
   /plans/{planId}/details:
