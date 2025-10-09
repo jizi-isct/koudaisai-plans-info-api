@@ -2,7 +2,7 @@ use crate::jwks::{fetch_jwks, find_jwk_by_kid, parse_jwt_header, Jwks, JwksError
 use jwt_simple::algorithms::{RS256PublicKey, RS384PublicKey, RS512PublicKey, RSAPublicKeyLike};
 use jwt_simple::claims::NoCustomClaims;
 use thiserror::Error;
-use worker::{console_debug, Headers};
+use worker::Headers;
 
 #[derive(Clone)]
 pub struct JwtVerifier {
@@ -15,7 +15,6 @@ impl JwtVerifier {
     }
 
     pub fn verify_token(&self, token: &str) -> Result<bool, JwksError> {
-        console_debug!("Verifying token: {}", token);
         // Parse JWT header
         let header = parse_jwt_header(token)?;
 
@@ -24,7 +23,6 @@ impl JwtVerifier {
 
         // Find the appropriate key
         let jwk = find_jwk_by_kid(&self.jwks, &kid).ok_or(JwksError::KeyNotFound)?;
-        console_debug!("Found key: {:?}", jwk);
 
         // Verify the token based on the key type and algorithm
         match (jwk.kty.as_str(), header.alg.as_str()) {
