@@ -126,9 +126,11 @@ impl Into<PlanTypeRead> for PlanTypeCreate {
 #[serde(rename_all = "snake_case")]
 pub enum PlanTypeRead {
     Booth {
+        #[serde(default)]
         categories: Vec<BoothPlanCategory>,
     },
     General {
+        #[serde(default)]
         categories: Vec<GeneralPlanCategory>,
     },
     Stage {},
