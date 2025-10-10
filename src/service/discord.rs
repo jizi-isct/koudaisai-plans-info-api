@@ -261,7 +261,11 @@ impl Discord {
         self.send_webhook(payload).await
     }
 
-    pub async fn send_update_plan(&self, id: String, plan_update: &PlanUpdate) -> Result<()> {
+    pub async fn get_update_plan_embed(
+        &self,
+        id: String,
+        plan_update: &PlanUpdate,
+    ) -> Result<Value, DiscordError> {
         let mut fields = Vec::new();
 
         // type
@@ -396,6 +400,33 @@ impl Discord {
             "title": "企画情報が編集されました",
             "fields": fields
         });
+
+        Ok(embed)
+    }
+
+    pub async fn send_bulk_update_plan(
+        &self,
+        plans: Vec<(String, PlanUpdate)>,
+    ) -> Result<(), DiscordError> {
+        for chunk in plans.chunks(10) {
+            let mut embeds = vec![];
+            for (id, plan_update) in chunk {
+                let embed = self.get_update_plan_embed(id.clone(), plan_update).await?;
+                embeds.push(embed);
+            }
+
+            let payload = json!({
+                "username": "複数の企画情報更新",
+                "embeds": embeds
+            });
+
+            self.send_webhook(payload).await?;
+        }
+        Ok(())
+    }
+
+    pub async fn send_update_plan(&self, id: String, plan_update: &PlanUpdate) -> Result<()> {
+        let embed = self.get_update_plan_embed(id.clone(), plan_update).await?;
 
         let payload = json!({
             "username": id,

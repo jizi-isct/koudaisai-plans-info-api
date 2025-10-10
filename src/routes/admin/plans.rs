@@ -218,7 +218,7 @@ pub async fn patch_plans_bulk(mut req: Request, ctx: RouteContext<()>) -> Result
             let mut errors = Vec::new();
 
             // すべてのエントリーに対して更新を試行
-            for (id, plan_update) in plans_map {
+            for (id, plan_update) in plans_map.clone() {
                 match plan_update.update(kv.clone(), &id).await {
                     Ok(_) => {
                         // 企画更新成功
@@ -241,7 +241,22 @@ pub async fn patch_plans_bulk(mut req: Request, ctx: RouteContext<()>) -> Result
             }
 
             if errors.is_empty() {
-                // 全て成功した場合は204 No Contentを返す
+                // discord通知
+                let discord = Discord::new_from_env(&ctx.env);
+                match discord
+                    .send_bulk_update_plan(
+                        plans_map
+                            .iter()
+                            .map(|e| (e.0.clone(), e.1.clone()))
+                            .collect(),
+                    )
+                    .await
+                {
+                    Ok(_) => {}
+                    Err(err) => {
+                        console_error!("Discord webhook error: {}", err)
+                    }
+                }
                 Ok(Response::empty()?.with_status(204))
             } else {
                 // 失敗したエントリーがある場合は207 Multi-Statusでエラー一覧を返す
