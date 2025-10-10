@@ -207,3 +207,54 @@ pub async fn post_plans_bulk(mut req: Request, ctx: RouteContext<()>) -> Result<
         .with_status(400)),
     }
 }
+
+pub async fn patch_plans_bulk(mut req: Request, ctx: RouteContext<()>) -> Result<Response, Error> {
+    match req
+        .json::<std::collections::HashMap<String, PlanUpdate>>()
+        .await
+    {
+        Ok(plans_map) => {
+            let kv = ctx.env.kv(KV_PLANS)?;
+            let mut errors = Vec::new();
+
+            // すべてのエントリーに対して更新を試行
+            for (id, plan_update) in plans_map {
+                match plan_update.update(kv.clone(), &id).await {
+                    Ok(_) => {
+                        // 企画更新成功
+                    }
+                    Err(PlanUpdateError::NotFound) => {
+                        errors.push(serde_json::json!({
+                            "plan_id": id,
+                            "code": 404,
+                            "message": format!("指定されたID「{}」の企画が見つかりません", id)
+                        }));
+                    }
+                    Err(_) => {
+                        errors.push(serde_json::json!({
+                            "plan_id": id,
+                            "code": 500,
+                            "message": format!("ID「{}」の企画更新中に内部エラーが発生しました", id)
+                        }));
+                    }
+                }
+            }
+
+            if errors.is_empty() {
+                // 全て成功した場合は204 No Contentを返す
+                Ok(Response::empty()?.with_status(204))
+            } else {
+                // 失敗したエントリーがある場合は207 Multi-Statusでエラー一覧を返す
+                Ok(Response::from_json(&serde_json::json!({
+                    "errors": errors
+                }))?
+                .with_status(207))
+            }
+        }
+        Err(e) => Ok(Response::from_json(&serde_json::json!({
+            "code": 400,
+            "message": e.to_string()
+        }))?
+        .with_status(400)),
+    }
+}
