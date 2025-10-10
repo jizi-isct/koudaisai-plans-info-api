@@ -493,18 +493,3 @@ impl UpdatePlanDetails {
         Ok(())
     }
 }
-
-impl CreatePlanDetails {
-    pub async fn put(self, kv: KvStore, id: &str) -> Result<(), PlanDetailsCreateError> {
-        let plan_details = ReadPlanDetails {
-            products: self.products,
-            additional_info: self.additional_info,
-        };
-
-        kv.put(id, serde_json::to_string(&plan_details)?)?
-            .execute()
-            .await?;
-
-        Ok(())
-    }
-}

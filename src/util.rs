@@ -57,10 +57,3 @@ pub fn extension_from_content_type(ct: &str) -> &'static str {
         _ => "bin",
     }
 }
-
-pub fn contains(arr: Option<Vec<&str>>, target: &str) -> bool {
-    match arr {
-        Some(v) => v.iter().any(|&x| x == target),
-        None => false,
-    }
-}
