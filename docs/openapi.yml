@@ -87,6 +87,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /admin/plans/{planId}:
     put:
       summary: 新しい企画を作成
       description: 指定されたIDで新しい企画を作成します。すでに同じIDの企画が存在する場合はconflictエラーを返します。
@@ -183,7 +184,7 @@ paths:
       security:
         - Bearer: [ ]
 
-  /plans:bulk:
+  /admin/plans:bulk:
     post:
       summary: 企画の一括作成
       description: 指定されたIDの企画を複数まとめて作成します。
@@ -306,6 +307,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+
+  /admin/plans/{planId}/details:
     put:
       summary: 企画の詳細情報を作成・更新
       description: 指定されたIDの企画の詳細情報を作成または完全に更新します。
@@ -410,6 +413,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+
+  /admin/plans/{planId}/icon:
     put:
       summary: 企画のアイコンをアップロード
       description: |-
@@ -451,7 +456,8 @@ paths:
                 $ref: '#/components/schemas/Error'
       security:
         - Bearer: [ ]
-  /plans/{planId}/icon:import:
+
+  /admin/plans/{planId}/icon:import:
     post:
       summary: URLからアイコンをインポート
       description: 指定されたURLからアイコンをダウンロードして企画のアイコンとして設定します
