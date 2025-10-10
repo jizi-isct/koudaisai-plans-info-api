@@ -1,7 +1,6 @@
 use crate::icon::{write_icon, WriteIconError};
-use crate::jwt_verifier::JwtVerifier;
 use crate::service::discord::Discord;
-use crate::{R2_PLAN_IMAGES, VAR_JWKS_URL};
+use crate::R2_PLAN_IMAGES;
 use worker::{console_error, Request, Response};
 
 pub async fn put_icon(
@@ -39,17 +38,6 @@ pub async fn post_icon_import(
 ) -> Result<Response, worker::Error> {
     let plan_id = ctx.param("plan_id").unwrap();
     let bucket = ctx.env.bucket(R2_PLAN_IMAGES)?;
-
-    // JWT認証チェック
-    let jwt_verifier = JwtVerifier::new(&*ctx.env.var(VAR_JWKS_URL)?.to_string())
-        .await
-        .unwrap();
-    if jwt_verifier
-        .verify_token_in_headers(&req.headers())
-        .is_err()
-    {
-        return Ok(Response::from_bytes("Unauthorized".into())?.with_status(401));
-    }
 
     // リクエストボディからURLを取得
     let body: serde_json::Value = match req.json().await {

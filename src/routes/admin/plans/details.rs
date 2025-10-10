@@ -1,23 +1,11 @@
-use crate::jwt_verifier::JwtVerifier;
 use crate::models::{
     CreatePlanDetails, PlanDetailsCreateError, PlanDetailsUpdateError, UpdatePlanDetails,
 };
-use crate::{KV_PLAN_DETAILS, VAR_JWKS_URL};
+use crate::KV_PLAN_DETAILS;
 use worker::{Error, Request, Response, RouteContext};
 
 pub async fn put_details(mut req: Request, ctx: RouteContext<()>) -> Result<Response, Error> {
     let plan_id = ctx.param("plan_id").map_or("", |v| v);
-
-    // JWT認証チェック
-    let jwt_verifier = JwtVerifier::new(&*ctx.env.var(VAR_JWKS_URL)?.to_string())
-        .await
-        .unwrap();
-    if jwt_verifier
-        .verify_token_in_headers(&req.headers())
-        .is_err()
-    {
-        return Ok(Response::from_bytes("Unauthorized".into())?.with_status(401));
-    }
 
     match req.json::<CreatePlanDetails>().await {
         Ok(plan_details_create) => {
@@ -60,17 +48,6 @@ pub async fn put_details(mut req: Request, ctx: RouteContext<()>) -> Result<Resp
 
 pub async fn patch_details(mut req: Request, ctx: RouteContext<()>) -> Result<Response, Error> {
     let plan_id = ctx.param("plan_id").map_or("", |v| v);
-
-    // JWT認証チェック
-    let jwt_verifier = JwtVerifier::new(&*ctx.env.var(VAR_JWKS_URL)?.to_string())
-        .await
-        .unwrap();
-    if jwt_verifier
-        .verify_token_in_headers(&req.headers())
-        .is_err()
-    {
-        return Ok(Response::from_bytes("Unauthorized".into())?.with_status(401));
-    }
 
     match req.json::<UpdatePlanDetails>().await {
         Ok(plan_details_update) => {

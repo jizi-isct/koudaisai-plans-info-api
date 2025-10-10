@@ -1,6 +1,4 @@
 mod icon;
-mod jwks;
-mod jwt_verifier;
 mod models;
 mod routes;
 mod service;
@@ -14,7 +12,6 @@ use crate::routes::plans::icon::get_icon;
 use crate::routes::plans::{get_plan, get_plans};
 use worker::*;
 
-const VAR_JWKS_URL: &str = "JWKS_URL";
 const KV_PLANS: &str = "PLANS";
 const KV_PLAN_DETAILS: &str = "PLAN_DETAILS";
 const R2_PLAN_IMAGES: &str = "plan_icons";
