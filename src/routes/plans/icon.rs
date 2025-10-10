@@ -3,7 +3,7 @@ use wasm_bindgen::JsValue;
 use worker::{Cors, Headers, Request, Response};
 
 pub async fn get_icon(
-    request: Request,
+    _req: Request,
     ctx: worker::RouteContext<()>,
 ) -> Result<Response, worker::Error> {
     let plan_id = ctx.param("plan_id").unwrap();

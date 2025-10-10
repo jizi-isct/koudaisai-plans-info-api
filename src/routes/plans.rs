@@ -95,7 +95,7 @@ pub async fn get_plans(req: Request, ctx: RouteContext<()>) -> Result<Response, 
     .with_cors(&Cors::new().with_origins(vec!["*"]))?)
 }
 
-pub async fn get_plan(req: Request, ctx: RouteContext<()>) -> Result<Response, Error> {
+pub async fn get_plan(_req: Request, ctx: RouteContext<()>) -> Result<Response, Error> {
     let plan_id = ctx.param("plan_id").map_or("", |v| v);
 
     let kv = ctx.env.kv(KV_PLANS)?;
