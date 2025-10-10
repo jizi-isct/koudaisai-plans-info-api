@@ -3,7 +3,7 @@ use thiserror::Error;
 use worker::{console_error, Bucket, Data, HttpMetadata};
 
 #[derive(Debug, Error)]
-pub enum PutIconError {
+pub enum WriteIconError {
     #[error(transparent)]
     WorkerError(#[from] worker::Error),
 }
@@ -13,13 +13,13 @@ pub enum PutIconError {
 /// # params
 /// * `bucket` - r2 bucket
 /// * `
-pub async fn put_icon(
+pub async fn write_icon(
     bucket: Bucket,
     plan_id: &str,
     bytes: impl Into<Data> + Into<Vec<u8>> + Clone,
     content_type: String,
     discord: Discord,
-) -> Result<(), PutIconError> {
+) -> Result<(), WriteIconError> {
     // オリジナルを保存
     let key_original = format!("{}/original", plan_id);
     bucket

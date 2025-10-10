@@ -126,9 +126,11 @@ impl Into<PlanTypeRead> for PlanTypeCreate {
 #[serde(rename_all = "snake_case")]
 pub enum PlanTypeRead {
     Booth {
+        #[serde(default)]
         categories: Vec<BoothPlanCategory>,
     },
     General {
+        #[serde(default)]
         categories: Vec<GeneralPlanCategory>,
     },
     Stage {},
@@ -483,21 +485,6 @@ impl UpdatePlanDetails {
 
         let patch = serde_json::to_value(self.clone())?;
         deep_merge(&mut plan_details, patch);
-
-        kv.put(id, serde_json::to_string(&plan_details)?)?
-            .execute()
-            .await?;
-
-        Ok(())
-    }
-}
-
-impl CreatePlanDetails {
-    pub async fn put(self, kv: KvStore, id: &str) -> Result<(), PlanDetailsCreateError> {
-        let plan_details = ReadPlanDetails {
-            products: self.products,
-            additional_info: self.additional_info,
-        };
 
         kv.put(id, serde_json::to_string(&plan_details)?)?
             .execute()
