@@ -3,9 +3,15 @@ pub mod icon;
 
 use crate::models::{PlanRead, PlanReadError, PlanTypeRead};
 use crate::KV_PLANS;
-use worker::{console_error, Cors, Error, Request, Response, RouteContext};
+use worker::{console_error, Cache, Cors, Error, Request, Response, RouteContext};
 
 pub async fn get_plans(req: Request, ctx: RouteContext<()>) -> Result<Response, Error> {
+    // cacheからの復元
+    let cache = Cache::default();
+    if let Some(response) = cache.get(&req, false).await? {
+        return Ok(response);
+    }
+
     let url = req.url()?;
     let query_params = url.query_pairs();
 
@@ -89,30 +95,44 @@ pub async fn get_plans(req: Request, ctx: RouteContext<()>) -> Result<Response, 
         flag
     });
 
-    Ok(Response::from_json(&serde_json::json!({
+    let mut response = Response::from_json(&serde_json::json!({
         "plans": plans
     }))?
-    .with_cors(&Cors::new().with_origins(vec!["*"]))?)
+    .with_cors(&Cors::new().with_origins(vec!["*"]))?;
+
+    cache.put(&req, response.cloned()?).await?;
+
+    Ok(response)
 }
 
-pub async fn get_plan(_req: Request, ctx: RouteContext<()>) -> Result<Response, Error> {
+pub async fn get_plan(req: Request, ctx: RouteContext<()>) -> Result<Response, Error> {
+    // cacheからの復元
+    let cache = Cache::default();
+    if let Some(response) = cache.get(&req, false).await? {
+        return Ok(response);
+    }
+
     let plan_id = ctx.param("plan_id").map_or("", |v| v);
 
     let kv = ctx.env.kv(KV_PLANS)?;
 
-    match PlanRead::read(kv, plan_id).await {
-        Ok(plan) => Response::from_json(&plan),
-        Err(PlanReadError::NotFound) => Ok(Response::from_json(&serde_json::json!({
+    let mut response = match PlanRead::read(kv, plan_id).await {
+        Ok(plan) => Response::from_json(&plan)?,
+        Err(PlanReadError::NotFound) => Response::from_json(&serde_json::json!({
             "code": 404,
             "message": "Plan not found."
         }))?
         .with_cors(&Cors::new().with_origins(vec!["*"]))?
-        .with_status(404)),
-        Err(_) => Ok(Response::from_json(&serde_json::json!({
+        .with_status(404),
+        Err(_) => Response::from_json(&serde_json::json!({
             "code": 500,
             "message": "Internal error occurred."
         }))?
         .with_cors(&Cors::new().with_origins(vec!["*"]))?
-        .with_status(500)),
-    }
+        .with_status(500),
+    };
+
+    cache.put(&req, response.cloned()?).await?;
+
+    Ok(response)
 }
