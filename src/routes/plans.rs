@@ -97,10 +97,12 @@ pub async fn get_plans(req: Request, ctx: RouteContext<()>) -> Result<Response, 
 
     let mut response = Response::from_json(&serde_json::json!({
         "plans": plans
-    }))?
-    .with_cors(&Cors::new().with_origins(vec!["*"]))?;
+    }))?;
 
-    cache.put(&req, response.cloned()?).await?;
+    response = response.with_cors(&Cors::new().with_origins(vec!["*"]))?;
+
+    let headers = response.headers_mut();
+    headers.set("Cache-Control", "public, max-age=3600, s-maxage=3600")?;
 
     Ok(response)
 }
@@ -122,7 +124,6 @@ pub async fn get_plan(req: Request, ctx: RouteContext<()>) -> Result<Response, E
             "code": 404,
             "message": "Plan not found."
         }))?
-        .with_cors(&Cors::new().with_origins(vec!["*"]))?
         .with_status(404),
         Err(_) => Response::from_json(&serde_json::json!({
             "code": 500,
@@ -131,6 +132,11 @@ pub async fn get_plan(req: Request, ctx: RouteContext<()>) -> Result<Response, E
         .with_cors(&Cors::new().with_origins(vec!["*"]))?
         .with_status(500),
     };
+
+    response = response.with_cors(&Cors::new().with_origins(vec!["*"]))?;
+
+    let headers = response.headers_mut();
+    headers.set("Cache-Control", "public, max-age=3600, s-maxage=3600")?;
 
     cache.put(&req, response.cloned()?).await?;
 
