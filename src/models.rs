@@ -59,9 +59,14 @@ impl Into<ScheduleRead> for ScheduleCreate {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Product {
+pub struct ProductItem {
     pub name: String,
-    pub price: u32,
+    pub options: Vec<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Products {
+    pub items: Vec<ProductItem>,
     pub description: String,
 }
 
@@ -402,19 +407,19 @@ pub async fn get_keys(kv: &KvStore) -> Result<Vec<String>, GetKeysError> {
 // PlanDetails models
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CreatePlanDetails {
-    pub products: Vec<Product>,
+    pub products: Products,
     pub additional_info: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ReadPlanDetails {
-    pub products: Vec<Product>,
+    pub products: Products,
     pub additional_info: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct UpdatePlanDetails {
-    pub products: Option<Vec<Product>>,
+    pub products: Option<Products>,
     pub additional_info: Option<String>,
 }
 
