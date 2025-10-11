@@ -874,24 +874,32 @@ components:
         - products
       properties:
         products:
-          type: array
-          description: 当日販売される商品の一覧
-          items:
-            type: object
-            required:
-              - name
-              - price
-              - description
-            properties:
-              name:
-                type: string
-                description: 商品名
-              price:
-                type: integer
-                description: 価格
-              description:
-                type: string
-                description: 商品説明
+          type: object
+          description: 当日販売される商品情報
+          required:
+            - items
+            - description
+          properties:
+            items:
+              type: array
+              description: 商品の一覧
+              items:
+                type: object
+                required:
+                  - name
+                  - options
+                properties:
+                  name:
+                    type: string
+                    description: 商品名
+                  options:
+                    type: array
+                    description: トッピングやフレーバーなどのオプション
+                    items:
+                      type: string
+            description:
+              type: string
+              description: 商品全体の説明文
         additional_info:
           type: string
           nullable: true
@@ -903,24 +911,32 @@ components:
         - products
       properties:
         products:
-          type: array
-          description: 当日販売される商品の一覧
-          items:
-            type: object
-            required:
-              - name
-              - price
-              - description
-            properties:
-              name:
-                type: string
-                description: 商品名
-              price:
-                type: integer
-                description: 価格
-              description:
-                type: string
-                description: 商品説明
+          type: object
+          description: 当日販売される商品情報
+          required:
+            - items
+            - description
+          properties:
+            items:
+              type: array
+              description: 商品の一覧
+              items:
+                type: object
+                required:
+                  - name
+                  - options
+                properties:
+                  name:
+                    type: string
+                    description: 商品名
+                  options:
+                    type: array
+                    description: トッピングやフレーバーなどのオプション
+                    items:
+                      type: string
+            description:
+              type: string
+              description: 商品全体の説明文
         additional_info:
           type: string
           nullable: true
@@ -930,20 +946,26 @@ components:
       type: object
       properties:
         products:
-          type: array
-          description: 当日販売される商品の一覧
-          items:
-            type: object
-            properties:
-              name:
-                type: string
-                description: 商品名
-              price:
-                type: integer
-                description: 価格
-              description:
-                type: string
-                description: 商品説明
+          type: object
+          description: 当日販売される商品情報
+          properties:
+            items:
+              type: array
+              description: 商品の一覧
+              items:
+                type: object
+                properties:
+                  name:
+                    type: string
+                    description: 商品名
+                  options:
+                    type: array
+                    description: トッピングやフレーバーなどのオプション
+                    items:
+                      type: string
+            description:
+              type: string
+              description: 商品全体の説明文
         additional_info:
           type: string
           nullable: true
