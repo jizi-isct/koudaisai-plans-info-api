@@ -1,25 +1,40 @@
 use crate::models::{PlanDetailsReadError, ReadPlanDetails};
 use crate::KV_PLAN_DETAILS;
-use worker::{Cors, Error, Request, Response, RouteContext};
+use worker::{Cache, Cors, Error, Request, Response, RouteContext};
 
-pub async fn get_details(_req: Request, ctx: RouteContext<()>) -> Result<Response, Error> {
+pub async fn get_details(req: Request, ctx: RouteContext<()>) -> Result<Response, Error> {
+    // cacheからの復元
+    let cache = Cache::default();
+    if let Some(response) = cache.get(&req, false).await? {
+        return Ok(response);
+    }
+
     let plan_id = ctx.param("plan_id").map_or("", |v| v);
 
     let kv = ctx.env.kv(KV_PLAN_DETAILS)?;
 
-    match ReadPlanDetails::read(kv, plan_id).await {
-        Ok(plan_details) => Response::from_json(&plan_details),
-        Err(PlanDetailsReadError::NotFound) => Ok(Response::from_json(&serde_json::json!({
+    let mut response = match ReadPlanDetails::read(kv, plan_id).await {
+        Ok(plan_details) => Response::from_json(&plan_details)?,
+        Err(PlanDetailsReadError::NotFound) => Response::from_json(&serde_json::json!({
             "code": 404,
             "message": "Plan details not found."
         }))?
         .with_cors(&Cors::new().with_origins(vec!["*"]))?
-        .with_status(404)),
-        Err(_) => Ok(Response::from_json(&serde_json::json!({
+        .with_status(404),
+        Err(_) => Response::from_json(&serde_json::json!({
             "code": 500,
             "message": "Internal error occurred."
         }))?
         .with_cors(&Cors::new().with_origins(vec!["*"]))?
-        .with_status(500)),
-    }
+        .with_status(500),
+    };
+
+    response = response.with_cors(&Cors::new().with_origins(vec!["*"]))?;
+
+    let headers = response.headers_mut();
+    headers.set("Cache-Control", "public, max-age=600, s-maxage=600")?;
+
+    cache.put(&req, response.cloned()?).await?;
+
+    Ok(response)
 }
