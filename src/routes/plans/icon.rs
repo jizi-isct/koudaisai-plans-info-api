@@ -1,11 +1,18 @@
 use crate::R2_PLAN_IMAGES;
 use wasm_bindgen::JsValue;
-use worker::{Cors, Headers, Request, Response};
+use worker::{Cache, Cors, Headers, Method, Request, Response};
 
 pub async fn get_icon(
-    _req: Request,
+    req: Request,
     ctx: worker::RouteContext<()>,
 ) -> Result<Response, worker::Error> {
+    // cacheからの復元
+    let cache_key = Request::new(req.url()?.as_str(), Method::Get)?;
+    let cache = Cache::default();
+    if let Some(response) = cache.get(&cache_key, false).await? {
+        return Ok(response);
+    }
+
     let plan_id = ctx.param("plan_id").unwrap();
     let bucket = ctx.env.bucket(R2_PLAN_IMAGES)?;
 
@@ -30,8 +37,13 @@ pub async fn get_icon(
     let Some(body) = object.body() else {
         return Err(worker::Error::Internal(JsValue::from_str("body is none")));
     };
-    Ok(Response::from_bytes(body.bytes().await?)?
+
+    let mut response = Response::from_bytes(body.bytes().await?)?
         .with_headers(headers)
         .with_cors(&Cors::new().with_origins(vec!["*"]))?
-        .with_status(200))
+        .with_status(200);
+
+    cache.put(&cache_key, response.cloned()?).await?;
+
+    Ok(response)
 }

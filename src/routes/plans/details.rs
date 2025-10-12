@@ -1,11 +1,12 @@
 use crate::models::{PlanDetailsReadError, ReadPlanDetails};
 use crate::KV_PLAN_DETAILS;
-use worker::{Cache, Cors, Error, Request, Response, RouteContext};
+use worker::{Cache, Cors, Error, Method, Request, Response, RouteContext};
 
 pub async fn get_details(req: Request, ctx: RouteContext<()>) -> Result<Response, Error> {
     // cacheからの復元
+    let cache_key = Request::new(req.url()?.as_str(), Method::Get)?;
     let cache = Cache::default();
-    if let Some(response) = cache.get(&req, false).await? {
+    if let Some(response) = cache.get(&cache_key, false).await? {
         return Ok(response);
     }
 
@@ -34,7 +35,7 @@ pub async fn get_details(req: Request, ctx: RouteContext<()>) -> Result<Response
     let headers = response.headers_mut();
     headers.set("Cache-Control", "public, max-age=600, s-maxage=600")?;
 
-    cache.put(&req, response.cloned()?).await?;
+    cache.put(&cache_key, response.cloned()?).await?;
 
     Ok(response)
 }

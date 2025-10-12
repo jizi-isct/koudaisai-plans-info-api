@@ -3,12 +3,13 @@ pub mod icon;
 
 use crate::models::{PlanRead, PlanReadError, PlanTypeRead};
 use crate::KV_PLANS;
-use worker::{console_error, Cache, Cors, Error, Request, Response, RouteContext};
+use worker::{console_error, Cache, Cors, Error, Method, Request, Response, RouteContext};
 
 pub async fn get_plans(req: Request, ctx: RouteContext<()>) -> Result<Response, Error> {
     // cacheからの復元
+    let cache_key = Request::new(req.url()?.as_str(), Method::Get)?;
     let cache = Cache::default();
-    if let Some(response) = cache.get(&req, false).await? {
+    if let Some(response) = cache.get(&cache_key, false).await? {
         return Ok(response);
     }
 
@@ -104,13 +105,16 @@ pub async fn get_plans(req: Request, ctx: RouteContext<()>) -> Result<Response, 
     let headers = response.headers_mut();
     headers.set("Cache-Control", "public, max-age=3600, s-maxage=3600")?;
 
+    cache.put(&cache_key, response.cloned()?).await?;
+
     Ok(response)
 }
 
 pub async fn get_plan(req: Request, ctx: RouteContext<()>) -> Result<Response, Error> {
     // cacheからの復元
+    let cache_key = Request::new(req.url()?.as_str(), Method::Get)?;
     let cache = Cache::default();
-    if let Some(response) = cache.get(&req, false).await? {
+    if let Some(response) = cache.get(&cache_key, false).await? {
         return Ok(response);
     }
 
@@ -138,7 +142,7 @@ pub async fn get_plan(req: Request, ctx: RouteContext<()>) -> Result<Response, E
     let headers = response.headers_mut();
     headers.set("Cache-Control", "public, max-age=3600, s-maxage=3600")?;
 
-    cache.put(&req, response.cloned()?).await?;
+    cache.put(&cache_key, response.cloned()?).await?;
 
     Ok(response)
 }
