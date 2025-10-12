@@ -34,6 +34,7 @@ pub async fn get_icon(
     let headers = Headers::new();
     object.write_http_metadata(headers.clone())?;
     headers.set("etag", &*object.http_etag())?;
+    headers.set("Cache-Control", "public, max-age=3600, s-maxage=3600")?;
     let Some(body) = object.body() else {
         return Err(worker::Error::Internal(JsValue::from_str("body is none")));
     };
