@@ -868,38 +868,91 @@ components:
             - latitude
             - longitude
 
+    ProductsCreate:
+      type: object
+      description: 当日販売される商品情報（作成用）
+      required:
+        - items
+        - description
+      properties:
+        items:
+          type: array
+          description: 商品の一覧
+          items:
+            type: object
+            required:
+              - name
+              - options
+            properties:
+              name:
+                type: string
+                description: 商品名
+              options:
+                type: array
+                description: トッピングやフレーバーなどのオプション
+                items:
+                  type: string
+        description:
+          type: string
+          description: 商品全体の説明文
+
+    ProductsRead:
+      type: object
+      description: 当日販売される商品情報（読み取り用）
+      required:
+        - items
+        - description
+      properties:
+        items:
+          type: array
+          description: 商品の一覧
+          items:
+            type: object
+            required:
+              - name
+              - options
+            properties:
+              name:
+                type: string
+                description: 商品名
+              options:
+                type: array
+                description: トッピングやフレーバーなどのオプション
+                items:
+                  type: string
+        description:
+          type: string
+          description: 商品全体の説明文
+
+    ProductsUpdate:
+      type: object
+      description: 当日販売される商品情報（更新用）
+      properties:
+        items:
+          type: array
+          description: 商品の一覧
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                description: 商品名
+              options:
+                type: array
+                description: トッピングやフレーバーなどのオプション
+                items:
+                  type: string
+        description:
+          type: string
+          description: 商品全体の説明文
+
     CreatePlanDetails:
       type: object
       required:
         - products
       properties:
         products:
-          type: object
-          description: 当日販売される商品情報
-          required:
-            - items
-            - description
-          properties:
-            items:
-              type: array
-              description: 商品の一覧
-              items:
-                type: object
-                required:
-                  - name
-                  - options
-                properties:
-                  name:
-                    type: string
-                    description: 商品名
-                  options:
-                    type: array
-                    description: トッピングやフレーバーなどのオプション
-                    items:
-                      type: string
-            description:
-              type: string
-              description: 商品全体の説明文
+          $ref: '#/components/schemas/ProductsCreate'
         additional_info:
           type: string
           nullable: true
@@ -911,32 +964,7 @@ components:
         - products
       properties:
         products:
-          type: object
-          description: 当日販売される商品情報
-          required:
-            - items
-            - description
-          properties:
-            items:
-              type: array
-              description: 商品の一覧
-              items:
-                type: object
-                required:
-                  - name
-                  - options
-                properties:
-                  name:
-                    type: string
-                    description: 商品名
-                  options:
-                    type: array
-                    description: トッピングやフレーバーなどのオプション
-                    items:
-                      type: string
-            description:
-              type: string
-              description: 商品全体の説明文
+          $ref: '#/components/schemas/ProductsRead'
         additional_info:
           type: string
           nullable: true
@@ -946,26 +974,7 @@ components:
       type: object
       properties:
         products:
-          type: object
-          description: 当日販売される商品情報
-          properties:
-            items:
-              type: array
-              description: 商品の一覧
-              items:
-                type: object
-                properties:
-                  name:
-                    type: string
-                    description: 商品名
-                  options:
-                    type: array
-                    description: トッピングやフレーバーなどのオプション
-                    items:
-                      type: string
-            description:
-              type: string
-              description: 商品全体の説明文
+          $ref: '#/components/schemas/ProductsUpdate'
         additional_info:
           type: string
           nullable: true

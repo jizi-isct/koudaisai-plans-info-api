@@ -65,9 +65,30 @@ pub struct ProductItem {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Products {
+pub struct ProductsCreate {
     pub items: Vec<ProductItem>,
     pub description: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ProductsRead {
+    pub items: Vec<ProductItem>,
+    pub description: String,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ProductsUpdate {
+    pub items: Option<Vec<ProductItem>>,
+    pub description: Option<String>,
+}
+
+impl Into<ProductsRead> for ProductsCreate {
+    fn into(self) -> ProductsRead {
+        ProductsRead {
+            items: self.items,
+            description: self.description,
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -407,19 +428,19 @@ pub async fn get_keys(kv: &KvStore) -> Result<Vec<String>, GetKeysError> {
 // PlanDetails models
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CreatePlanDetails {
-    pub products: Products,
+    pub products: ProductsCreate,
     pub additional_info: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ReadPlanDetails {
-    pub products: Products,
+    pub products: ProductsRead,
     pub additional_info: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct UpdatePlanDetails {
-    pub products: Option<Products>,
+    pub products: Option<ProductsUpdate>,
     pub additional_info: Option<String>,
 }
 
@@ -441,7 +462,7 @@ impl CreatePlanDetails {
         }
 
         let plan_details = ReadPlanDetails {
-            products: self.products,
+            products: self.products.into(),
             additional_info: self.additional_info,
         };
 
