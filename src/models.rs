@@ -59,9 +59,16 @@ impl Into<ScheduleRead> for ScheduleCreate {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ProductOption {
+    pub name: String,
+    pub price: Option<f64>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ProductItem {
     pub name: String,
-    pub options: Vec<String>,
+    pub price: Option<f64>,
+    pub options: Vec<ProductOption>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
