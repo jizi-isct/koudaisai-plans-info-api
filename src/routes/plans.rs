@@ -102,13 +102,21 @@ pub async fn get_plans(req: Request, ctx: RouteContext<()>) -> Result<Response, 
 
     // combine
     if combine_schedule {
-        plans
-            .iter_mut()
-            .for_each(|plan| plan.schedule.combine_mut())
+        plans = plans
+            .iter()
+            .map(|plan| PlanRead {
+                schedule: plan.schedule.combine(),
+                ..plan.clone()
+            })
+            .collect();
     } else {
-        plans
-            .iter_mut()
-            .for_each(|plan| plan.schedule.uncombine_mut())
+        plans = plans
+            .iter()
+            .map(|plan| PlanRead {
+                schedule: plan.schedule.uncombine(),
+                ..plan.clone()
+            })
+            .collect();
     }
 
     let mut response = Response::from_json(&serde_json::json!({
@@ -153,9 +161,15 @@ pub async fn get_plan(req: Request, ctx: RouteContext<()>) -> Result<Response, E
     let mut response = match PlanRead::read(kv, plan_id).await {
         Ok(mut plan) => {
             if combine_schedule {
-                plan.schedule.combine_mut()
+                plan = PlanRead {
+                    schedule: plan.schedule.combine(),
+                    ..plan.clone()
+                }
             } else {
-                plan.schedule.uncombine_mut()
+                plan = PlanRead {
+                    schedule: plan.schedule.uncombine(),
+                    ..plan.clone()
+                }
             }
             Response::from_json(&plan)?
         }
