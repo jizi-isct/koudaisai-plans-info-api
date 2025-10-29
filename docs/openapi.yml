@@ -4,10 +4,8 @@ info:
   description: 東京科学大学の学園祭である工大祭の企画情報を提供するAPI
   version: 1.0.0
 servers:
-  - url: https://api.koudaisai.com/v1
+  - url: https://api2025.jizi.jp/v1
     description: 本番環境
-  - url: https://staging-api.koudaisai.com/v1
-    description: ステージング環境
   - url: http://localhost:8080/v1/
     description: 開発環境
 
