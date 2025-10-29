@@ -1,6 +1,7 @@
 use crate::models::base::Location;
 use crate::models::plan::{PlanCreate, PlanUpdate};
 use crate::models::plan_type::{PlanTypeCreate, PlanTypeUpdate};
+use crate::models::schedule::{DaySchedule, Time};
 use crate::util::extension_from_content_type;
 use anyhow::Result;
 use serde_json::{json, Value};
@@ -27,6 +28,41 @@ impl Discord {
         Self {
             webhook_url: webhook_url.into(),
             base_url: "https://api2025.jizi.jp".into(),
+        }
+    }
+
+    fn time_to_string(t: &Time) -> String {
+        // Time implements Serialize to HH:mm; use serde to avoid accessing internals
+        serde_json::to_string(t)
+            .map(|s| s.trim_matches('"').to_string())
+            .unwrap_or_default()
+    }
+
+    fn combine_range(day: &Vec<DaySchedule>) -> Option<(Time, Time)> {
+        if day.is_empty() {
+            return None;
+        }
+        let mut start = day[0].start_time;
+        let mut end = day[0].end_time;
+        for s in day.iter().skip(1) {
+            if s.start_time < start {
+                start = s.start_time;
+            }
+            if s.end_time > end {
+                end = s.end_time;
+            }
+        }
+        Some((start, end))
+    }
+
+    fn format_range(day: &Vec<DaySchedule>) -> String {
+        match Self::combine_range(day) {
+            Some((start, end)) => format!(
+                "{} - {}",
+                Self::time_to_string(&start),
+                Self::time_to_string(&end)
+            ),
+            None => "なし".to_string(),
         }
     }
 
@@ -193,32 +229,27 @@ impl Discord {
         ));
 
         // schedule
-        if let Some(day1) = &plan_create.schedule.day1 {
-            fields.push(Self::create_embed_field(
-                "1日目企画実施時間",
-                format!("{} - {}", day1.start_time, day1.end_time),
-                true,
-            ));
+        let day1_str = if plan_create.schedule.day1.is_empty() {
+            "なし".to_string()
         } else {
-            fields.push(Self::create_embed_field(
-                "1日目企画実施時間",
-                "なし".to_string(),
-                true,
-            ));
-        }
-        if let Some(day2) = &plan_create.schedule.day2 {
-            fields.push(Self::create_embed_field(
-                "2日目企画実施時間",
-                format!("{} - {}", day2.start_time, day2.end_time),
-                true,
-            ));
+            Self::format_range(&plan_create.schedule.day1)
+        };
+        fields.push(Self::create_embed_field(
+            "1日目企画実施時間",
+            day1_str,
+            true,
+        ));
+
+        let day2_str = if plan_create.schedule.day2.is_empty() {
+            "なし".to_string()
         } else {
-            fields.push(Self::create_embed_field(
-                "2日目企画実施時間",
-                "なし".to_string(),
-                true,
-            ));
-        }
+            Self::format_range(&plan_create.schedule.day2)
+        };
+        fields.push(Self::create_embed_field(
+            "2日目企画実施時間",
+            day2_str,
+            true,
+        ));
 
         // location
         let mut locations = String::new();
@@ -351,7 +382,7 @@ impl Discord {
                 if let Some(day1) = day1 {
                     fields.push(Self::create_embed_field(
                         "1日目企画実施時間",
-                        format!("{} - {}", day1.start_time, day1.end_time),
+                        Self::format_range(day1),
                         true,
                     ));
                 } else {
@@ -366,7 +397,7 @@ impl Discord {
                 if let Some(day2) = day2 {
                     fields.push(Self::create_embed_field(
                         "2日目企画実施時間",
-                        format!("{} - {}", day2.start_time, day2.end_time),
+                        Self::format_range(day2),
                         true,
                     ));
                 } else {
