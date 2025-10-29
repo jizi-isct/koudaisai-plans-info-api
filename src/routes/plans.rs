@@ -128,9 +128,9 @@ pub async fn get_plans(req: Request, ctx: RouteContext<()>) -> Result<Response, 
     if 200 <= response.status_code() && response.status_code() < 300 {
         let headers = response.headers_mut();
         headers.set("Cache-Control", "public, max-age=3600, s-maxage=3600")?;
-    }
 
-    cache.put(&cache_key, response.cloned()?).await?;
+        cache.put(&cache_key, response.cloned()?).await?;
+    }
 
     Ok(response)
 }
@@ -193,9 +193,9 @@ pub async fn get_plan(req: Request, ctx: RouteContext<()>) -> Result<Response, E
     if 200 <= response.status_code() && response.status_code() < 300 {
         let headers = response.headers_mut();
         headers.set("Cache-Control", "public, max-age=3600, s-maxage=3600")?;
-    }
 
-    cache.put(&cache_key, response.cloned()?).await?;
+        cache.put(&cache_key, response.cloned()?).await?;
+    }
 
     Ok(response)
 }
