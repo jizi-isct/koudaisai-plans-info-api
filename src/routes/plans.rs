@@ -4,6 +4,7 @@ pub mod icon;
 use crate::models::plan::{PlanRead, PlanReadError};
 use crate::models::plan_type::PlanTypeRead;
 use crate::KV_PLANS;
+use std::str::FromStr;
 use worker::{console_error, Cache, Cors, Error, Method, Request, Response, RouteContext};
 
 pub async fn get_plans(req: Request, ctx: RouteContext<()>) -> Result<Response, Error> {
@@ -22,6 +23,7 @@ pub async fn get_plans(req: Request, ctx: RouteContext<()>) -> Result<Response, 
     let mut recommended: Option<bool> = None;
     let mut child_friendly: Option<bool> = None;
     let mut lab_tour: Option<bool> = None;
+    let mut combine_schedule: bool = true;
 
     for (key, value) in query_params {
         match key.as_ref() {
@@ -29,6 +31,7 @@ pub async fn get_plans(req: Request, ctx: RouteContext<()>) -> Result<Response, 
             "recommended" => recommended = value.parse().ok(),
             "child_friendly" => child_friendly = value.parse().ok(),
             "lab_tour" => lab_tour = value.parse().ok(),
+            "combine_schedule" => combine_schedule = value.parse().ok().unwrap_or(true),
             _ => {}
         }
     }
@@ -97,6 +100,17 @@ pub async fn get_plans(req: Request, ctx: RouteContext<()>) -> Result<Response, 
         flag
     });
 
+    // combine
+    if combine_schedule {
+        plans
+            .iter_mut()
+            .for_each(|plan| plan.schedule.combine_mut())
+    } else {
+        plans
+            .iter_mut()
+            .for_each(|plan| plan.schedule.uncombine_mut())
+    }
+
     let mut response = Response::from_json(&serde_json::json!({
         "plans": plans
     }))?;
@@ -121,10 +135,30 @@ pub async fn get_plan(req: Request, ctx: RouteContext<()>) -> Result<Response, E
 
     let plan_id = ctx.param("plan_id").map_or("", |v| v);
 
+    let url = req.url()?;
+    let query_params = url.query_pairs();
+
+    // クエリパラメータの解析
+    let mut combine_schedule: bool = true;
+
+    for (key, value) in query_params {
+        match key.as_ref() {
+            "combine_schedule" => combine_schedule = value.parse().ok().unwrap_or(true),
+            _ => {}
+        }
+    }
+
     let kv = ctx.env.kv(KV_PLANS)?;
 
     let mut response = match PlanRead::read(kv, plan_id).await {
-        Ok(plan) => Response::from_json(&plan)?,
+        Ok(mut plan) => {
+            if combine_schedule {
+                plan.schedule.combine_mut()
+            } else {
+                plan.schedule.uncombine_mut()
+            }
+            Response::from_json(&plan)?
+        }
         Err(PlanReadError::NotFound) => Response::from_json(&serde_json::json!({
             "code": 404,
             "message": "Plan not found."
