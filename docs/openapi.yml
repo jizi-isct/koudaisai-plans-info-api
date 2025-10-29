@@ -42,6 +42,12 @@ paths:
           description: 研究室ツアー参加企画でフィルタリング
           schema:
             type: boolean
+        - name: combine_schedule
+          in: query
+          description: "スケジュールの表現方法。省略時はtrue。trueの場合：null→null、配列→全要素の最小start_timeと最大end_timeに結合した単一オブジェクト、文字列→文字列、オブジェクト→オブジェクト。falseの場合：null→[]、配列→そのまま、文字列→[文字列]、オブジェクト→[オブジェクト]。"
+          schema:
+            type: boolean
+            default: true
       responses:
         '200':
           description: 企画情報のリスト
@@ -70,6 +76,12 @@ paths:
           description: 企画ID
           schema:
             type: string
+        - name: combine_schedule
+          in: query
+          description: "スケジュールの表現方法。省略時はtrue。trueの場合：null→null、配列→全要素の最小start_timeと最大end_timeに結合した単一オブジェクト、文字列→文字列、オブジェクト→オブジェクト。falseの場合：null→[]、配列→そのまま、文字列→[文字列]、オブジェクト→[オブジェクト]。"
+          schema:
+            type: boolean
+            default: true
       responses:
         '200':
           description: 企画情報
