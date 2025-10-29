@@ -83,6 +83,28 @@ impl ScheduleRead {
     pub fn combine_mut(&mut self) {
         *self = self.combine()
     }
+    pub fn uncombine(&self) -> ScheduleRead {
+        match self {
+            ScheduleRead::Combined { day1, day2 } => {
+                let day1 = match day1 {
+                    None => vec![],
+                    Some(day1) => vec![day1.clone()],
+                };
+                let day2 = match day2 {
+                    None => vec![],
+                    Some(day2) => vec![day2.clone()],
+                };
+                ScheduleRead::NotCombined { day1, day2 }
+            }
+            ScheduleRead::NotCombined { day1, day2 } => ScheduleRead::NotCombined {
+                day1: day1.clone(),
+                day2: day2.clone(),
+            },
+        }
+    }
+    pub fn uncombine_mut(&mut self) {
+        *self = self.uncombine()
+    }
     fn combine_schedule(day: &Vec<DaySchedule>) -> DaySchedule {
         let mut start_time = day[0].start_time.clone();
         let mut end_time = day[0].end_time.clone();
