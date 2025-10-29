@@ -1,3 +1,4 @@
+use crate::models::base::Location;
 use serde::ser::SerializeStruct;
 use serde::{Deserialize, Serialize};
 
@@ -43,6 +44,8 @@ impl<'a> Deserialize<'a> for Time {
 pub struct DaySchedule {
     pub start_time: Time,
     pub end_time: Time,
+    #[serde(default)]
+    location: Option<Location>,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -116,6 +119,7 @@ impl ScheduleRead {
         DaySchedule {
             start_time,
             end_time,
+            location: None,
         }
     }
 }
