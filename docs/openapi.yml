@@ -616,6 +616,11 @@ components:
           pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$'
           description: 企画終了時間（HH:mm形式）
           example: "17:00"
+        location:
+          nullable: true
+          oneOf:
+            - $ref: '#/components/schemas/IndoorLocation'
+            - $ref: '#/components/schemas/OutdoorLocation'
 
     ScheduleCreate:
       type: object
