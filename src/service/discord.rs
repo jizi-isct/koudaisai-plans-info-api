@@ -296,9 +296,12 @@ impl Discord {
 
     pub async fn get_update_plan_embed(
         &self,
+        id: String,
         plan_update: &PlanUpdate,
     ) -> Result<Value, DiscordError> {
         let mut fields = Vec::new();
+
+        fields.push(Self::create_embed_field("企画ID", id, false));
 
         // type
         match &plan_update.r#type {
@@ -442,8 +445,8 @@ impl Discord {
     ) -> Result<(), DiscordError> {
         for chunk in plans.chunks(10) {
             let mut embeds = vec![];
-            for (_, plan_update) in chunk {
-                let embed = self.get_update_plan_embed(plan_update).await?;
+            for (id, plan_update) in chunk {
+                let embed = self.get_update_plan_embed(id.clone(), plan_update).await?;
                 embeds.push(embed);
             }
 
@@ -458,7 +461,7 @@ impl Discord {
     }
 
     pub async fn send_update_plan(&self, id: String, plan_update: &PlanUpdate) -> Result<()> {
-        let embed = self.get_update_plan_embed(plan_update).await?;
+        let embed = self.get_update_plan_embed(id.clone(), plan_update).await?;
 
         let payload = json!({
             "username": id,
