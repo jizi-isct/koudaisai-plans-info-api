@@ -68,11 +68,8 @@ impl ScheduleRead {
     pub fn combine(&self) -> ScheduleRead {
         match self {
             ScheduleRead::Combined { day1, day2 } => ScheduleRead::Combined {
-                day1: Some(DaySchedule {
-                    start_time: day1.as_ref().unwrap().start_time.clone(),
-                    end_time: day2.as_ref().unwrap().end_time.clone(),
-                }),
-                day2: None,
+                day1: day1.clone(),
+                day2: day2.clone(),
             },
             ScheduleRead::NotCombined { day1, day2 } => ScheduleRead::Combined {
                 day1: Some(ScheduleRead::combine_schedule(day1)),
