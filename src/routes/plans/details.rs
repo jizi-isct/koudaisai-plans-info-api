@@ -1,4 +1,4 @@
-use crate::models::{PlanDetailsReadError, ReadPlanDetails};
+use crate::models::details::{PlanDetailsReadError, ReadPlanDetails};
 use crate::KV_PLAN_DETAILS;
 use worker::{Cache, Cors, Error, Method, Request, Response, RouteContext};
 

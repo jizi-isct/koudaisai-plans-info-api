@@ -1,5 +1,6 @@
-use crate::models::{
-    put_keys, PlanCreate, PlanCreateError, PlanRead, PlanReadError, PlanUpdate, PlanUpdateError,
+use crate::models::keys::put_keys;
+use crate::models::plan::{
+    PlanCreate, PlanCreateError, PlanRead, PlanReadError, PlanUpdate, PlanUpdateError,
 };
 use crate::service::discord::Discord;
 use crate::KV_PLANS;

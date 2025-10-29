@@ -1,4 +1,6 @@
-use crate::models::{Location, PlanCreate, PlanTypeCreate, PlanTypeUpdate, PlanUpdate};
+use crate::models::base::Location;
+use crate::models::plan::{PlanCreate, PlanUpdate};
+use crate::models::plan_type::{PlanTypeCreate, PlanTypeUpdate};
 use crate::util::extension_from_content_type;
 use anyhow::Result;
 use serde_json::{json, Value};
@@ -263,7 +265,6 @@ impl Discord {
 
     pub async fn get_update_plan_embed(
         &self,
-        id: String,
         plan_update: &PlanUpdate,
     ) -> Result<Value, DiscordError> {
         let mut fields = Vec::new();
@@ -410,8 +411,8 @@ impl Discord {
     ) -> Result<(), DiscordError> {
         for chunk in plans.chunks(10) {
             let mut embeds = vec![];
-            for (id, plan_update) in chunk {
-                let embed = self.get_update_plan_embed(id.clone(), plan_update).await?;
+            for (_, plan_update) in chunk {
+                let embed = self.get_update_plan_embed(plan_update).await?;
                 embeds.push(embed);
             }
 
@@ -426,7 +427,7 @@ impl Discord {
     }
 
     pub async fn send_update_plan(&self, id: String, plan_update: &PlanUpdate) -> Result<()> {
-        let embed = self.get_update_plan_embed(id.clone(), plan_update).await?;
+        let embed = self.get_update_plan_embed(plan_update).await?;
 
         let payload = json!({
             "username": id,

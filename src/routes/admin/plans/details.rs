@@ -1,4 +1,4 @@
-use crate::models::{
+use crate::models::details::{
     CreatePlanDetails, PlanDetailsCreateError, PlanDetailsUpdateError, UpdatePlanDetails,
 };
 use crate::KV_PLAN_DETAILS;

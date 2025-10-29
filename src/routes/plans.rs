@@ -1,7 +1,8 @@
 pub mod details;
 pub mod icon;
 
-use crate::models::{PlanRead, PlanReadError, PlanTypeRead};
+use crate::models::plan::{PlanRead, PlanReadError};
+use crate::models::plan_type::PlanTypeRead;
 use crate::KV_PLANS;
 use worker::{console_error, Cache, Cors, Error, Method, Request, Response, RouteContext};
 
