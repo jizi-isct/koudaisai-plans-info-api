@@ -54,7 +54,7 @@ pub struct ScheduleCreate {
     pub day2: Vec<DaySchedule>,
 }
 
-#[derive(Clone, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum ScheduleRead {
     Combined {
@@ -141,34 +141,6 @@ impl Into<ScheduleRead> for ScheduleCreate {
         ScheduleRead::NotCombined {
             day1: self.day1,
             day2: self.day2,
-        }
-    }
-}
-
-impl Serialize for ScheduleRead {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        match self {
-            ScheduleRead::Combined { day1, day2 } => {
-                let mut state = serializer.serialize_struct("ScheduleRead", 2)?;
-                match day1 {
-                    Some(day1) => state.serialize_field("day1", &vec![day1])?,
-                    None => state.serialize_field::<Vec<String>>("day1", &vec![])?,
-                }
-                match day2 {
-                    Some(day2) => state.serialize_field("day2", &vec![day2])?,
-                    None => state.serialize_field::<Vec<String>>("day2", &vec![])?,
-                }
-                state.end()
-            }
-            ScheduleRead::NotCombined { day1, day2 } => {
-                let mut state = serializer.serialize_struct("ScheduleRead", 2)?;
-                state.serialize_field("day1", &day1)?;
-                state.serialize_field("day2", &day2)?;
-                state.end()
-            }
         }
     }
 }

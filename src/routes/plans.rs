@@ -125,8 +125,10 @@ pub async fn get_plans(req: Request, ctx: RouteContext<()>) -> Result<Response, 
 
     response = response.with_cors(&Cors::new().with_origins(vec!["*"]))?;
 
-    let headers = response.headers_mut();
-    headers.set("Cache-Control", "public, max-age=3600, s-maxage=3600")?;
+    if 200 <= response.status_code() && response.status_code() < 300 {
+        let headers = response.headers_mut();
+        headers.set("Cache-Control", "public, max-age=3600, s-maxage=3600")?;
+    }
 
     cache.put(&cache_key, response.cloned()?).await?;
 
@@ -188,8 +190,10 @@ pub async fn get_plan(req: Request, ctx: RouteContext<()>) -> Result<Response, E
 
     response = response.with_cors(&Cors::new().with_origins(vec!["*"]))?;
 
-    let headers = response.headers_mut();
-    headers.set("Cache-Control", "public, max-age=3600, s-maxage=3600")?;
+    if 200 <= response.status_code() && response.status_code() < 300 {
+        let headers = response.headers_mut();
+        headers.set("Cache-Control", "public, max-age=3600, s-maxage=3600")?;
+    }
 
     cache.put(&cache_key, response.cloned()?).await?;
 
