@@ -75,8 +75,8 @@ impl ScheduleRead {
                 day2: day2.clone(),
             },
             ScheduleRead::NotCombined { day1, day2 } => ScheduleRead::Combined {
-                day1: Some(ScheduleRead::combine_schedule(day1)),
-                day2: Some(ScheduleRead::combine_schedule(day2)),
+                day1: ScheduleRead::combine_schedule(day1),
+                day2: ScheduleRead::combine_schedule(day2),
             },
         }
     }
@@ -105,7 +105,11 @@ impl ScheduleRead {
     pub fn uncombine_mut(&mut self) {
         *self = self.uncombine()
     }
-    fn combine_schedule(day: &Vec<DaySchedule>) -> DaySchedule {
+    fn combine_schedule(day: &Vec<DaySchedule>) -> Option<DaySchedule> {
+        if day.is_empty() {
+            return None;
+        }
+
         let mut start_time = day[0].start_time.clone();
         let mut end_time = day[0].end_time.clone();
         for schedule in day.iter().skip(1) {
@@ -116,11 +120,11 @@ impl ScheduleRead {
                 end_time = schedule.end_time.clone();
             }
         }
-        DaySchedule {
+        Some(DaySchedule {
             start_time,
             end_time,
             location: None,
-        }
+        })
     }
 }
 
