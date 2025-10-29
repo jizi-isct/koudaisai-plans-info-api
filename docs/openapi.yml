@@ -588,6 +588,62 @@ components:
         - rest
         - presentation
 
+    DaySchedule:
+      type: object
+      required:
+        - start_time
+        - end_time
+      properties:
+        start_time:
+          type: string
+          pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$'
+          description: 企画開始時間（HH:mm形式）
+          example: "10:00"
+        end_time:
+          type: string
+          pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$'
+          description: 企画終了時間（HH:mm形式）
+          example: "17:00"
+
+    ScheduleCreate:
+      type: object
+      description: 企画のスケジュール（作成用）
+      properties:
+        day1:
+          allOf:
+            - $ref: '#/components/schemas/DaySchedule'
+          nullable: true
+        day2:
+          allOf:
+            - $ref: '#/components/schemas/DaySchedule'
+          nullable: true
+
+    ScheduleRead:
+      type: object
+      description: 企画のスケジュール（読み取り用）
+      properties:
+        day1:
+          allOf:
+            - $ref: '#/components/schemas/DaySchedule'
+          nullable: true
+        day2:
+          allOf:
+            - $ref: '#/components/schemas/DaySchedule'
+          nullable: true
+
+    ScheduleUpdate:
+      type: object
+      description: 企画のスケジュール（更新用）
+      properties:
+        day1:
+          allOf:
+            - $ref: '#/components/schemas/DaySchedule'
+          nullable: true
+        day2:
+          allOf:
+            - $ref: '#/components/schemas/DaySchedule'
+          nullable: true
+
     BasePlanRead:
       type: object
       required:
@@ -623,43 +679,7 @@ components:
           type: boolean
           description: おすすめ企画か否か
         schedule:
-          type: object
-          description: 企画のスケジュール
-          properties:
-            day1:
-              type: object
-              nullable: true
-              properties:
-                start_time:
-                  type: string
-                  pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$'
-                  description: 企画開始時間（HH:mm形式）
-                  example: "10:00"
-                end_time:
-                  type: string
-                  pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$'
-                  description: 企画終了時間（HH:mm形式）
-                  example: "17:00"
-              required:
-                - start_time
-                - end_time
-            day2:
-              type: object
-              nullable: true
-              properties:
-                start_time:
-                  type: string
-                  pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$'
-                  description: 企画開始時間（HH:mm形式）
-                  example: "11:00"
-                end_time:
-                  type: string
-                  pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$'
-                  description: 企画終了時間（HH:mm形式）
-                  example: "16:00"
-              required:
-                - start_time
-                - end_time
+          $ref: '#/components/schemas/ScheduleRead'
         location:
           type: array
           description: 企画実施場所一覧
@@ -719,43 +739,7 @@ components:
           type: boolean
           description: おすすめ企画か否か
         schedule:
-          type: object
-          description: 企画のスケジュール
-          properties:
-            day1:
-              type: object
-              nullable: true
-              properties:
-                start_time:
-                  type: string
-                  pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$'
-                  description: 企画開始時間（HH:mm形式）
-                  example: "10:00"
-                end_time:
-                  type: string
-                  pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$'
-                  description: 企画終了時間（HH:mm形式）
-                  example: "17:00"
-              required:
-                - start_time
-                - end_time
-            day2:
-              type: object
-              nullable: true
-              properties:
-                start_time:
-                  type: string
-                  pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$'
-                  description: 企画開始時間（HH:mm形式）
-                  example: "11:00"
-                end_time:
-                  type: string
-                  pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$'
-                  description: 企画終了時間（HH:mm形式）
-                  example: "16:00"
-              required:
-                - start_time
-                - end_time
+          $ref: '#/components/schemas/ScheduleCreate'
         location:
           type: array
           description: 企画実施場所一覧
@@ -803,43 +787,7 @@ components:
           type: boolean
           description: おすすめ企画か否か
         schedule:
-          type: object
-          description: 企画のスケジュール
-          properties:
-            day1:
-              type: object
-              nullable: true
-              properties:
-                start_time:
-                  type: string
-                  pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$'
-                  description: 企画開始時間（HH:mm形式）
-                  example: "10:00"
-                end_time:
-                  type: string
-                  pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$'
-                  description: 企画終了時間（HH:mm形式）
-                  example: "17:00"
-              required:
-                - start_time
-                - end_time
-            day2:
-              type: object
-              nullable: true
-              properties:
-                start_time:
-                  type: string
-                  pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$'
-                  description: 企画開始時間（HH:mm形式）
-                  example: "11:00"
-                end_time:
-                  type: string
-                  pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$'
-                  description: 企画終了時間（HH:mm形式）
-                  example: "16:00"
-              required:
-                - start_time
-                - end_time
+          $ref: '#/components/schemas/ScheduleUpdate'
         location:
           type: array
           description: 企画実施場所一覧
