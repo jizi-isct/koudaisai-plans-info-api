@@ -955,8 +955,6 @@ components:
 
     CreatePlanDetails:
       type: object
-      required:
-        - products
       properties:
         products:
           $ref: '#/components/schemas/ProductsCreate'
@@ -967,8 +965,6 @@ components:
 
     ReadPlanDetails:
       type: object
-      required:
-        - products
       properties:
         products:
           $ref: '#/components/schemas/ProductsRead'
