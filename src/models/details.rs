@@ -1,33 +1,27 @@
-use crate::util::deep_merge;
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 use thiserror::Error;
 use worker::kv::{KvError, KvStore};
 
-use super::products::{ProductsCreate, ProductsRead, ProductsUpdate};
+use super::products::{ProductsCreate, ProductsRead};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CreatePlanDetails {
-    pub products: ProductsCreate,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub products: Option<ProductsCreate>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub additional_info: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ReadPlanDetails {
-    pub products: ProductsRead,
-    pub additional_info: Option<String>,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct UpdatePlanDetails {
-    pub products: Option<ProductsUpdate>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub products: Option<ProductsRead>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub additional_info: Option<String>,
 }
 
 #[derive(Error, Debug)]
 pub enum PlanDetailsCreateError {
-    #[error("Conflict")]
-    Conflict,
     #[error(transparent)]
     KvError(#[from] KvError),
     #[error(transparent)]
@@ -36,13 +30,9 @@ pub enum PlanDetailsCreateError {
 
 impl CreatePlanDetails {
     pub async fn create(self, kv: KvStore, id: &str) -> Result<(), PlanDetailsCreateError> {
-        // Check if plan details already exists
-        if let Some(_) = kv.get(id).json::<ReadPlanDetails>().await? {
-            return Err(PlanDetailsCreateError::Conflict);
-        }
-
+        // Overwrite (upsert) semantics for PUT
         let plan_details = ReadPlanDetails {
-            products: self.products.into(),
+            products: self.products.map(Into::into),
             additional_info: self.additional_info,
         };
 
@@ -68,34 +58,5 @@ impl ReadPlanDetails {
             Some(plan_details) => Ok(plan_details),
             None => Err(PlanDetailsReadError::NotFound),
         }
-    }
-}
-
-#[derive(Error, Debug)]
-pub enum PlanDetailsUpdateError {
-    #[error("Not found")]
-    NotFound,
-    #[error(transparent)]
-    KvError(#[from] KvError),
-    #[error(transparent)]
-    WorkerError(#[from] worker::Error),
-    #[error(transparent)]
-    SerdeError(#[from] serde_json::Error),
-}
-
-impl UpdatePlanDetails {
-    pub async fn update(self, kv: KvStore, id: &str) -> Result<(), PlanDetailsUpdateError> {
-        let Some(mut plan_details) = kv.get(id).json::<Value>().await? else {
-            return Err(PlanDetailsUpdateError::NotFound);
-        };
-
-        let patch = serde_json::to_value(self.clone())?;
-        deep_merge(&mut plan_details, patch);
-
-        kv.put(id, serde_json::to_string(&plan_details)?)?
-            .execute()
-            .await?;
-
-        Ok(())
     }
 }

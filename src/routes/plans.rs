@@ -4,7 +4,6 @@ pub mod icon;
 use crate::models::plan::{PlanRead, PlanReadError};
 use crate::models::plan_type::PlanTypeRead;
 use crate::KV_PLANS;
-use std::str::FromStr;
 use worker::{console_error, Cache, Cors, Error, Method, Request, Response, RouteContext};
 
 pub async fn get_plans(req: Request, ctx: RouteContext<()>) -> Result<Response, Error> {

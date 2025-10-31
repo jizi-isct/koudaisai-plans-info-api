@@ -25,12 +25,6 @@ pub struct ProductsRead {
     pub description: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct ProductsUpdate {
-    pub items: Option<Vec<ProductItem>>,
-    pub description: Option<String>,
-}
-
 impl Into<ProductsRead> for ProductsCreate {
     fn into(self) -> ProductsRead {
         ProductsRead {

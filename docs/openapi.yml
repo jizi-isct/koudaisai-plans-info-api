@@ -352,9 +352,9 @@ paths:
                 $ref: '#/components/schemas/Error'
       security:
         - Bearer: [ ]
-    patch:
-      summary: 企画の詳細情報を部分更新
-      description: 指定されたIDの企画の詳細情報を部分的に更新します。
+    get:
+      summary: 企画の詳細情報を取得（管理）
+      description: 指定されたIDの企画の詳細情報を取得します（管理用）。
       parameters:
         - name: planId
           in: path
@@ -362,21 +362,13 @@ paths:
           description: 企画ID
           schema:
             type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdatePlanDetails'
       responses:
-        '204':
-          description: 詳細情報が正常に更新されました
-        '400':
-          description: リクエストが無効です
+        '200':
+          description: 企画詳細情報
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/ReadPlanDetails'
         '404':
           description: 企画が見つかりません
           content:

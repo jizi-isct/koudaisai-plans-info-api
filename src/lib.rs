@@ -4,7 +4,7 @@ mod routes;
 mod service;
 mod util;
 
-use crate::routes::admin::plans::details::{patch_details, put_details};
+use crate::routes::admin::plans::details::{get_details_admin, put_details};
 use crate::routes::admin::plans::icon::{post_icon_import, put_icon};
 use crate::routes::admin::plans::{
     delete_plan, patch_plan, patch_plans_bulk, post_plans_bulk, put_plan,
@@ -37,8 +37,8 @@ async fn fetch(req: Request, env: Env, _ctx: Context) -> Result<Response> {
         .get_async("/v1/plans/:plan_id/icon", get_icon)
         .post_async("/v1/admin/plans/:plan_id/icon:import", post_icon_import)
         .get_async("/v1/plans/:plan_id/details", get_details)
+        .get_async("/v1/admin/plans/:plan_id/details", get_details_admin)
         .put_async("/v1/admin/plans/:plan_id/details", put_details)
-        .patch_async("/v1/admin/plans/:plan_id/details", patch_details)
         .run(req, env)
         .await
 }

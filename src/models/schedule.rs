@@ -1,5 +1,4 @@
 use crate::models::base::Location;
-use serde::ser::SerializeStruct;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Ord, PartialOrd, PartialEq, Eq, Debug, Copy)]
@@ -80,9 +79,6 @@ impl ScheduleRead {
             },
         }
     }
-    pub fn combine_mut(&mut self) {
-        *self = self.combine()
-    }
     pub fn uncombine(&self) -> ScheduleRead {
         match self {
             ScheduleRead::Combined { day1, day2 } => {
@@ -101,9 +97,6 @@ impl ScheduleRead {
                 day2: day2.clone(),
             },
         }
-    }
-    pub fn uncombine_mut(&mut self) {
-        *self = self.uncombine()
     }
     fn combine_schedule(day: &Vec<DaySchedule>) -> Option<DaySchedule> {
         if day.is_empty() {
