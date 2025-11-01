@@ -1,17 +1,28 @@
 use crate::models::details::{
     CreatePlanDetails, PlanDetailsCreateError, PlanDetailsReadError, ReadPlanDetails,
 };
+use crate::service::discord::Discord;
 use crate::KV_PLAN_DETAILS;
 use worker::{Error, Request, Response, RouteContext};
 
 pub async fn put_details(mut req: Request, ctx: RouteContext<()>) -> Result<Response, Error> {
-    let plan_id = ctx.param("plan_id").map_or("", |v| v);
+    let plan_id = ctx.param("plan_id").map_or("", |v| v).to_string();
 
     match req.json::<CreatePlanDetails>().await {
         Ok(plan_details_create) => {
             let kv = ctx.env.kv(KV_PLAN_DETAILS)?;
-            match plan_details_create.create(kv, plan_id).await {
+            // keep a clone for Discord notification after successful upsert
+            let details_for_notify = plan_details_create.clone();
+            match plan_details_create.create(kv, &plan_id).await {
                 Ok(_) => {
+                    // fire-and-forget Discord notification (do not fail the API on error)
+                    let discord = Discord::new_from_env(&ctx.env);
+                    if let Err(err) = discord
+                        .send_update_plan_details(plan_id.clone(), &details_for_notify)
+                        .await
+                    {
+                        worker::console_log!("Failed to send Discord details update: {}", err);
+                    }
                     // 詳細情報作成・更新成功時は204 No Contentを返す
                     Ok(Response::empty()?.with_status(204))
                 }

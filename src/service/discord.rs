@@ -1,4 +1,5 @@
 use crate::models::base::Location;
+use crate::models::details::CreatePlanDetails;
 use crate::models::plan::{PlanCreate, PlanUpdate};
 use crate::models::plan_type::{PlanTypeCreate, PlanTypeUpdate};
 use crate::models::schedule::{DaySchedule, Time};
@@ -10,6 +11,7 @@ use worker::{Env, Fetch, Method, Request, RequestInit};
 
 pub struct Discord {
     webhook_url: String,
+    webhook_url_details: String,
     base_url: String,
 }
 
@@ -24,9 +26,10 @@ pub enum DiscordError {
 }
 
 impl Discord {
-    pub fn new<T: Into<String>>(webhook_url: T) -> Self {
+    pub fn new<T: Into<String>>(webhook_url: T, webhook_url_details: T) -> Self {
         Self {
             webhook_url: webhook_url.into(),
+            webhook_url_details: webhook_url_details.into(),
             base_url: "https://api2025.jizi.jp".into(),
         }
     }
@@ -71,7 +74,11 @@ impl Discord {
             .secret("DISCORD_WEBHOOK_URL")
             .expect("DISCORD_WEBHOOK_URL is not set")
             .to_string();
-        Self::new(webhook_url)
+        let webhook_url_details = env
+            .secret("DISCORD_WEBHOOK_URL_DETAILS")
+            .expect("DISCORD_WEBHOOK_URL_DETAILS is not set")
+            .to_string();
+        Self::new(webhook_url, webhook_url_details)
     }
 
     fn create_embed_field(name: &str, value: String, inline: bool) -> Value {
@@ -82,7 +89,11 @@ impl Discord {
         })
     }
 
-    async fn send_webhook(&self, payload: Value) -> Result<(), DiscordError> {
+    async fn send_webhook<T: Into<String> + Clone>(
+        &self,
+        url: &T,
+        payload: Value,
+    ) -> Result<(), DiscordError> {
         loop {
             let mut init = RequestInit::new();
             init.with_method(Method::Post);
@@ -92,7 +103,7 @@ impl Discord {
             headers.set("Content-Type", "application/json")?;
             init.with_headers(headers);
 
-            let request = Request::new_with_init(&self.webhook_url, &init)?;
+            let request = Request::new_with_init(url.clone().into().as_str(), &init)?;
             let mut response = Fetch::Request(request).send().await?;
 
             let status = response.status_code();
@@ -278,7 +289,7 @@ impl Discord {
             "embeds": [embed]
         });
 
-        self.send_webhook(payload).await
+        self.send_webhook(&self.webhook_url, payload).await
     }
 
     pub async fn send_bulk_create_plan(&self) -> Result<(), DiscordError> {
@@ -291,7 +302,7 @@ impl Discord {
             "embeds": [embed]
         });
 
-        self.send_webhook(payload).await
+        self.send_webhook(&self.webhook_url, payload).await
     }
 
     pub async fn get_update_plan_embed(
@@ -455,7 +466,7 @@ impl Discord {
                 "embeds": embeds
             });
 
-            self.send_webhook(payload).await?;
+            self.send_webhook(&self.webhook_url, payload).await?;
         }
         Ok(())
     }
@@ -469,7 +480,9 @@ impl Discord {
             "embeds": [embed]
         });
 
-        self.send_webhook(payload).await.map_err(Into::into)
+        self.send_webhook(&self.webhook_url, payload)
+            .await
+            .map_err(Into::into)
     }
 
     pub async fn send_delete_plan(&self, id: String) -> Result<()> {
@@ -482,7 +495,93 @@ impl Discord {
             "embeds": [embed]
         });
 
-        self.send_webhook(payload).await.map_err(Into::into)
+        self.send_webhook(&self.webhook_url, payload)
+            .await
+            .map_err(Into::into)
+    }
+
+    pub async fn send_update_plan_details(
+        &self,
+        id: String,
+        details: &CreatePlanDetails,
+    ) -> Result<(), DiscordError> {
+        let mut fields = Vec::new();
+
+        // products summary
+        if let Some(products) = &details.products {
+            let items_count = products.items.len();
+            let mut items_preview = String::new();
+            for (i, item) in products.items.iter().take(5).enumerate() {
+                items_preview.push_str(&format!(
+                    "{}. {}{}\n",
+                    i + 1,
+                    item.name,
+                    match item.price {
+                        Some(p) => format!(" ({})", p),
+                        None => String::new(),
+                    }
+                ));
+            }
+            if items_count > 5 {
+                items_preview.push_str(&format!("…ほか{}件", items_count - 5));
+            }
+
+            fields.push(Self::create_embed_field(
+                "販売商品",
+                if items_preview.is_empty() {
+                    "(項目なし)".to_string()
+                } else {
+                    items_preview
+                },
+                false,
+            ));
+
+            if !products.description.is_empty() {
+                fields.push(Self::create_embed_field(
+                    "商品説明",
+                    products.description.clone(),
+                    false,
+                ));
+            }
+        } else {
+            fields.push(Self::create_embed_field(
+                "販売商品",
+                "(未設定)".to_string(),
+                false,
+            ));
+        }
+
+        // additional_info
+        match &details.additional_info {
+            Some(info) if !info.is_empty() => {
+                let truncated = if info.len() > 1800 {
+                    // Discord field limit consideration
+                    format!("{}…", &info[..1800])
+                } else {
+                    info.clone()
+                };
+                fields.push(Self::create_embed_field("追加情報", truncated, false));
+            }
+            _ => {
+                fields.push(Self::create_embed_field(
+                    "追加情報",
+                    "(未設定)".to_string(),
+                    false,
+                ));
+            }
+        }
+
+        let embed = json!({
+            "title": "企画詳細が更新されました",
+            "fields": fields
+        });
+
+        let payload = json!({
+            "username": id,
+            "embeds": [embed]
+        });
+
+        self.send_webhook(&self.webhook_url_details, payload).await
     }
 
     pub async fn send_update_plan_icon(
