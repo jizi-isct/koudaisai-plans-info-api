@@ -507,8 +507,8 @@ impl Discord {
     ) -> Result<(), DiscordError> {
         let mut fields = Vec::new();
 
-        // products summary
-        if let Some(products) = &details.products {
+        // product summary
+        if let Some(products) = &details.product {
             let items_count = products.items.len();
             let mut items_preview = String::new();
             for (i, item) in products.items.iter().take(5).enumerate() {

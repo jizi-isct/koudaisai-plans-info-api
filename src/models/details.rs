@@ -7,7 +7,7 @@ use super::products::{ProductsCreate, ProductsRead};
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CreatePlanDetails {
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub products: Option<ProductsCreate>,
+    pub product: Option<ProductsCreate>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub additional_info: Option<String>,
 }
@@ -15,7 +15,7 @@ pub struct CreatePlanDetails {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ReadPlanDetails {
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub products: Option<ProductsRead>,
+    pub product: Option<ProductsRead>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub additional_info: Option<String>,
 }
@@ -32,7 +32,7 @@ impl CreatePlanDetails {
     pub async fn create(self, kv: KvStore, id: &str) -> Result<(), PlanDetailsCreateError> {
         // Overwrite (upsert) semantics for PUT
         let plan_details = ReadPlanDetails {
-            products: self.products.map(Into::into),
+            product: self.product.map(Into::into),
             additional_info: self.additional_info,
         };
 

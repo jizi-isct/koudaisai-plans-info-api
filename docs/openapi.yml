@@ -948,7 +948,7 @@ components:
     CreatePlanDetails:
       type: object
       properties:
-        products:
+        product:
           $ref: '#/components/schemas/ProductsCreate'
         additional_info:
           type: string
@@ -958,7 +958,7 @@ components:
     ReadPlanDetails:
       type: object
       properties:
-        products:
+        product:
           $ref: '#/components/schemas/ProductsRead'
         additional_info:
           type: string
@@ -968,7 +968,7 @@ components:
     UpdatePlanDetails:
       type: object
       properties:
-        products:
+        product:
           $ref: '#/components/schemas/ProductsUpdate'
         additional_info:
           type: string
