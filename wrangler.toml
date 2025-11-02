@@ -10,7 +10,7 @@ JWKS_URL = "https://auth2024.jizi.jp/realms/JIZI-Portal/protocol/openid-connect/
 
 [[kv_namespaces]]
 binding = "PLANS"
-id = "31ed065d0c21487a8ad781912874a2da"
+id = "431c204df59d48579d06bb59f4dfad6a"
 
 [[kv_namespaces]]
 binding = "PLAN_DETAILS"
