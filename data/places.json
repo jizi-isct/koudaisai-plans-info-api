@@ -154,49 +154,49 @@
       "id": "TAKI_PLAZA_STAGE",
       "district_id": "east",
       "name": "Taki Plazaステージ",
-      "type": "outdoor"
+      "type": "stage"
     },
     {
       "id": "WOOD_DECK",
       "district_id": "east",
-      "name": "ウッドデッキ",
-      "type": "outdoor"
+      "name": "ウッドデッキステージ",
+      "type": "stage"
     },
     {
       "id": "OUTDOOR_STAGE",
       "district_id": "south",
       "name": "野外ステージ",
-      "type": "outdoor"
+      "type": "stage"
     },
     {
       "id": "LECTURE_HALL_70",
       "district_id": "west",
       "name": "70周年記念講堂",
-      "type": "outdoor"
+      "type": "stage"
     },
     {
       "id": "DIGITAL_HALL",
       "district_id": "west",
       "name": "ディジタル多目的ホール",
-      "type": "outdoor"
+      "type": "stage"
     },
     {
       "id": "GYM",
       "district_id": "west",
       "name": "屋内運動場",
-      "type": "outdoor"
+      "type": "building"
     },
     {
       "id": "CIRCLE_1",
       "district_id": "south",
       "name": "サークル棟1",
-      "type": "outdoor"
+      "type": "building"
     },
     {
       "id": "CIRCLE_2",
       "district_id": "west",
       "name": "サークル棟2",
-      "type": "outdoor"
+      "type": "building"
     },
     {
       "id": "WASTE_STATION",
@@ -214,50 +214,43 @@
       "id": "FS_EAST_ICHO",
       "district_id": "east",
       "name": "東地区いちょう並木",
-      "type": "food_stall_area",
-      "stall_count": 16
+      "type": "food_stall_area"
     },
     {
       "id": "FS_EAST_DECK",
       "district_id": "east",
       "name": "東地区ウッドデッキ横",
-      "type": "food_stall_area",
-      "stall_count": 11
+      "type": "food_stall_area"
     },
     {
       "id": "FS_HONKAN_MAIN",
       "district_id": "honkan",
       "name": "本館地区本館横",
-      "type": "food_stall_area",
-      "stall_count": 14
+      "type": "food_stall_area"
     },
     {
       "id": "FS_HONKAN_WEST",
       "district_id": "honkan",
       "name": "本館地区西案内所横",
-      "type": "food_stall_area",
-      "stall_count": 2
+      "type": "food_stall_area"
     },
     {
       "id": "FS_SOUTH_EAST",
       "district_id": "south",
       "name": "南地区東",
-      "type": "food_stall_area",
-      "stall_count": 24
+      "type": "food_stall_area"
     },
     {
       "id": "FS_SOUTH_WEST",
       "district_id": "south",
       "name": "南地区西",
-      "type": "food_stall_area",
-      "stall_count": 16
+      "type": "food_stall_area"
     },
     {
       "id": "FS_ISHIKAWADAI",
       "district_id": "ishikawadai",
       "name": "石川台地区",
-      "type": "food_stall_area",
-      "stall_count": 7
+      "type": "food_stall_area"
     }
   ],
   "rooms": [
@@ -890,6 +883,18 @@
       "venue_id": "MI6",
       "name": "302",
       "floor": 3
+    },
+    {
+      "id": "GYM-ARENA",
+      "venue_id": "GYM",
+      "name": "アリーナ",
+      "floor": 1
+    },
+    {
+      "id": "GYM-DOJO",
+      "venue_id": "GYM",
+      "name": "武道場",
+      "floor": -1
     },
     {
       "id": "TP-B1-EVENT",
