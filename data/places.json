@@ -1,4 +1,5 @@
 {
+  "$schema": "./places.schema.json",
   "districts": [
     {
       "id": "east",
